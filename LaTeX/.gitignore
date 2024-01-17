@@ -1,0 +1,7 @@
+# ignore everything
+*
+# but not the gitignore file
+!.gitignore
+# and two folders
+!thesis.pdf
+!thesis.tex
