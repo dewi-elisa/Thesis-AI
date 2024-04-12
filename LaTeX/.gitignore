@@ -1,8 +1,10 @@
 # ignore everything
-*
+/*
 # but not the gitignore file
 !.gitignore
 # and three files
 !thesis.pdf
 !thesis.tex
-!uva_logo.png
+!articles.bib
+# and a folder
+!/figs
