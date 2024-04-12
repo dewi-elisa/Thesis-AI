@@ -2,6 +2,7 @@
 *
 # but not the gitignore file
 !.gitignore
-# and two folders
+# and three files
 !thesis.pdf
 !thesis.tex
+!uva_logo.png

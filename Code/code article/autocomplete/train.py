@@ -17,9 +17,14 @@ import eval
 
 
 def binary_cross_entropy_with_sigmoid_out(input, target):
-    loss = F.binary_cross_entropy(input, target, reduction="none")
-    loss.masked_fill_(target.ge(0).bitwise_not(), 0)  # ignore_index=-1
-    return loss
+    mask = target != -1
+    loss_over_masked = F.binary_cross_entropy(input[mask], target[mask], reduction="none")
+    result = torch.zeros_like(input)
+    result[mask] = loss_over_masked
+    # print(target)
+    # loss = F.binary_cross_entropy(input[mask], target[mask], reduction="none")
+    # loss.masked_fill_(target.ge(0).bitwise_not(), 0)  # ignore_index=-1
+    return result
 
 
 def ce_loss_per_token(prob_over_dyn_vocab,
