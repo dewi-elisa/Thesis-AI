@@ -14,6 +14,9 @@
 \usepackage{hyperref}
 \usepackage{apacite}
 
+\usepackage{amsmath}
+\usepackage{amssymb}
+
 % [CHANGE] The title of your thesis. If your thesis has a subtitle, then this
 % should appear right below the main title, in a smaller font.
 \newcommand{\theTitle}{The first sentence \\
@@ -148,7 +151,7 @@ Therefore, autocomplete systems need to use more complex models to be more effic
 \begin{figure}
     \centering
     \includegraphics[width=.5\linewidth]{figs/autocomplete_game.png}
-    \caption{schematic overview of the communicatoin game. Figure from \protect\citeA{autocomplete}.}
+    \caption{schematic overview of the communicatoin game. \\ Figure from \protect\citeA{autocomplete}.}
     \label{fig:autocomplete}
 \end{figure}
 
@@ -158,8 +161,19 @@ A schematic overview is given in figure \ref{fig:autocomplete}.
 The communication game is succesfull if the retrieved sentence is the same as the initial sentence. 
 
 More formally, a target sentence $x=(x_1, \dots, x_m)$ is communicated by a user through the key words $z=(z_1, \dots, z_n)$. 
+Note that $z$ is a subsequence of $x$. 
 The system then tries to retrieve the target sentence by decoding the key words. 
 The target sentence is described by the key words using encoding strategy $q_{\alpha}(z | x)$ and the system decodes the key words by using decoding strategy $p_{\beta}(x|z)$. 
+
+For a model to be efficient, the number of key words needs to be as low as possible. 
+In addition, for a model to be accurate, the probability of reconstructing $x$ from $z$ needs to be as high as possible. 
+Therefore, we can define a cost and a loss, respectively:
+\begin{equation}
+    \text{cost}(x,\alpha) = \mathbb{E}_{q_{\alpha}(z|x)} [\text{length}(z)]
+\end{equation}
+\begin{equation}
+    \text{loss}(x,\alpha,\beta) = \mathbb{E}_{q_{\alpha}(z|x)} [-\log p_{\beta}(x|z)]
+\end{equation}
 
 \subsection{Segmentation model}
 Why does a segmentation model work?
