@@ -47,12 +47,15 @@ class Encoder(nn.Module):
         encoder_outputs, _ = self.encoder(embedded)
         scores = self.linear(encoder_outputs).view(batch_size, -1)
 
-
         print("scores:")
         print(scores)
 
-        # What happens here?
-        masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
+        # What happens here? It does not seem to change anyhting
+        # Does it replace the values in score with -inf when they are <= 0?
+        # But there are no tokens <= 0 in the vocab 
+        # (is that why it does not seem to change anything?)
+        # masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
+        masked_scores = scores
 
         print("masked scores:")
         print(masked_scores)
@@ -100,6 +103,8 @@ if __name__ == "__main__":
 
     tokenizer = data.build_tokenizer(opt)
     word2id, id2word = data.build_vocab(opt, exp, tokenizer)
+
+    # print(list(id2word.keys())[:100])
 
     encoder = Encoder(opt, word2id, id2word, device)
 
