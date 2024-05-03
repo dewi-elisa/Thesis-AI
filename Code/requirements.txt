@@ -1,0 +1,7 @@
+nltk
+configargparse
+torch
+colorama
+numpy
+tensorboardX
+matplotlib
