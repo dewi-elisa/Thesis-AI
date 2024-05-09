@@ -54,7 +54,7 @@ class Encoder(nn.Module):
         # Does it replace the values in score with -inf when they are <= 0?
         # But there are no tokens <= 0 in the vocab
         # (is that why it does not seem to change anything?)
-        # answer: padding = 0 -> for when working in batches, 
+        # answer: padding = 0 -> for when working in batches,
         # in that case uncomment the next line
         # masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
         masked_scores = scores
@@ -95,7 +95,7 @@ class Decoder(nn.Module):
                                               embedding_dim=self.embedding_dim,
                                               padding_idx=0)
         self.decoder_embedding = nn.Embedding(num_embeddings=self.num_tokens,
-                                              embedding_dim=self.embedding_dim * 2,  # noqa
+                                              embedding_dim=self.embedding_dim * 2,
                                               padding_idx=0)
 
         self.encoder = nn.LSTM(input_size=self.embedding_dim,
@@ -106,84 +106,109 @@ class Decoder(nn.Module):
                                hidden_size=self.embedding_dim * 2,
                                batch_first=True)
 
+        self.attn = nn.Linear(in_features=self.embedding_dim * 2,
+                              out_features=self.embedding_dim * 2)
+
+        self.W = nn.Linear(in_features=self.embedding_dim * 4,
+                           out_features=self.embedding_dim * 4)
+
+        self.linear = nn.Linear(in_features=self.embedding_dim * 4,
+                                out_features=self.num_tokens,
+                                bias=True)
+
     def forward(self, tokens, trg_seqs):
-        # in the code of the paper they build a dynamic vocab here, why is this needed?
+        batch_size = 1  # for now, otherwise uncomment the next line
+        # batch_size = tokens.size(0)
+
+        # build vocab
+        # Q: in the code of the paper they build a dynamic vocab here, why is this needed?
+        # A: not necessary for now, just use a single static vocab
+        # new Q: can I just use word2id and id2word from before?
 
         # embed the tokens
         embedded = self.encoder_embedding(tokens)
         embedded = F.relu(F.dropout(embedded, p=0.1))
 
         # encode the tokens
-        # in the code of the paper encoder_hidden is split into (encoder_last_hidden, _), why?
-        # as I understand from the documentation and the fact that we have a bidirectional lstm
-        # this is because the first one is the last hidden state from left-to-right and the other
-        # one is the last hidden state from right-to-left
-        # why do we need to use the left-to-right one and not the right-to-left one?
-        # left-to-right feels intuitive to me too, but I am curious as to why
         encoded, (encoder_hidden, _) = self.encoder(embedded)
 
         print('encoded:')
         print(encoded)
 
         # decode
-        batch_size, max_seq_len = trg_seqs.size()
+        batch_size, max_seq_len = 1, tokens.size()[0]  # for now, otherwise uncomment next line
+        # batch_size, max_seq_len = tokens.size()
 
         print('batch_size:')
         print(batch_size)  # 1
 
         last_word = torch.tensor([self.word2id["<sos>"]] * batch_size).to(self.device)
-        # the paper code uses dim=1 -> because of batches? it gives me an error with dim=1
-        encoder_hidden = torch.cat((encoder_hidden[0], encoder_hidden[1]), dim=0)
+        # Q: the paper code uses dim=1 -> because of batches? it gives me an error with dim=1
+        # A: yes. because of batches, you can also try dim=-1
+        encoder_hidden = torch.cat((encoder_hidden[0], encoder_hidden[1]), dim=-1)
         decoder_hidden = (encoder_hidden.view(1, batch_size, self.embedding_dim * 2),
                           torch.zeros(1, batch_size, self.embedding_dim * 2).to(self.device))
 
         print('last word:')
-        print(last_word)  # tensor([1])
-
-        print('encoder hidden:')
-        print(encoder_hidden.size())  # torch.Size([600])
+        print(last_word)
 
         sentence = [last_word.item()]
 
         for decoder_step in range(max_seq_len):
             # embed the last generated word (or the <sos> symbol if there are none)
-            # the next line gives me the folowwing error:
-            # TypeError: Embedding.forward() takes 2 positional arguments but 3 were given
-            embedded2 = self.decoder_embedding(last_word, encoder_hidden).view(batch_size, -1)
+            embedded2 = self.decoder_embedding(last_word).view(batch_size, -1)
             embedded2 = F.relu(F.dropout(embedded2, p=0.1))
-            embedded3 = torch.cat((embedded2, encoder_hidden), dim=1).view(batch_size,
-                                                                           1,
-                                                                           self.embedding_dim * 4)
 
-            # decode the embedded tokens -> generate the full sentence
-            decoded, decoder_hidden = self.decoder(embedded3, decoder_hidden)
+            # concatenate the context vector to the embedding
+            embedded3 = torch.cat((embedded2, encoder_hidden.view(batch_size, -1)), dim=-1)
+
+            # decode the embedded token -> generate the next word
+            decoded, decoder_hidden = self.decoder(
+                embedded3.view(batch_size, 1, self.embedding_dim * 4),
+                decoder_hidden)
 
             print('decoded:')
             print(decoded)
 
-            # in the code of the paper they use a global attention mechanism (how does this work again?)
-            # looking at the MLSD slides, we have a context vector q
-            #   -> last hidden state (of the decoder?)
-            # and an embedding of the words z_i
-            #   -> the output of the decoder encoder?
+            # Luong's global attention
+            # mask = tokens.gt(0).unsqueeze(2).expand_as(encoded).float()
+            mask = tokens.gt(0).unsqueeze(1).expand_as(encoded).float()
+            encoded = encoded.mul(mask)
+            # attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
+            #                       encoded.transpose(1, 2))
+            attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
+                                  encoded.transpose(0, 1).unsqueeze(0))
 
-            # and a mask softmax based on src_lens (what is src_lens?)
-            # what does this part do exactly?
-            # does it take a softmax over the attention mask
-            # generated in the global attention mechanism step?
+            # mask softmax
+            max_key_len = max_seq_len  # check this
+            mask_attn = tokens.gt(0).view(
+                batch_size, 1, max_key_len).to(self.device)
+            attn_prod.masked_fill_(mask_attn.bitwise_not(), -float('inf'))
+            attn_weights = F.softmax(attn_prod, dim=2)
+            attn_weights = attn_weights.masked_fill(torch.isnan(attn_weights), 0)
+            context = torch.bmm(attn_weights, encoded.unsqueeze(0))
+            hc = torch.cat(
+                [decoder_hidden[0].squeeze(0), context.squeeze(1)], dim=1)
+            out_hc = self.W(hc)
+            decoder_output = self.linear(out_hc)
+            p_word = torch.zeros([batch_size, len(self.word2id)]).to(self.device)
+            p_word[:, :len(self.word2id)] = F.softmax(decoder_output, dim=1)
 
-            # and a copy generator (what is a copy generator?)
-            # in the paper, appendix C, they say something about generating
-            # the next token from a fixed vocabulary or copy one of the input tokens
-            # is that about the copy generator part?
+            # copy generator
+            # skipped for now
 
-            last_word = decoded
-            sentence = sentence + [last_word.item()]
+            last_word = decoder_output.argmax().item()
+            sentence = sentence + [last_word]
+            print('sentence:')
+            print(sentence)
+            print([self.id2word[word] for word in sentence])
+            last_word = torch.tensor([last_word] * batch_size).to(self.device)
 
-        print('sentence:')
+        print('final sentence:')
         print(sentence)
-        print([self.id2word[word.item()] for word in sentence])
+        print([self.id2word[word] for word in sentence])
         return sentence
+
 
 if __name__ == "__main__":
     parser = configargparse.ArgumentParser(description="train.py")
@@ -223,3 +248,5 @@ if __name__ == "__main__":
         predicted = decoder(keywords, trg_seqs)
 
         print(predicted)
+
+# in the code of the paper they also initialize the wheigts. Is this necessary?
