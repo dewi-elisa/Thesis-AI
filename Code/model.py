@@ -170,34 +170,67 @@ class Decoder(nn.Module):
             print('decoded:')
             print(decoded)
 
-            # Luong's global attention
+            '''
+            Luong's global attention
+            '''
+            # first, look which tokens are words
             # mask = tokens.gt(0).unsqueeze(2).expand_as(encoded).float()
             mask = tokens.gt(0).unsqueeze(1).expand_as(encoded).float()
+
+            print('mask:')
+            print(mask)
+
+            # then, apply the mask to encoded
             encoded = encoded.mul(mask)
+
+            # put the decoder hidden state in the attention layer and apply to encoded
             # attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
             #                       encoded.transpose(1, 2))
             attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
                                   encoded.transpose(0, 1).unsqueeze(0))
 
-            # mask softmax
+            print('attn_prod:')
+            print(attn_prod)
+
+            '''
+            mask softmax
+            '''
             max_key_len = max_seq_len  # check this
+
+            # look at the tokens that are words
             mask_attn = tokens.gt(0).view(
                 batch_size, 1, max_key_len).to(self.device)
+
+            # replace the tokens that are not a word by -inf
             attn_prod.masked_fill_(mask_attn.bitwise_not(), -float('inf'))
+
+            # put the attention probabilities in a softmax
             attn_weights = F.softmax(attn_prod, dim=2)
+
+            # if there is a nan in the attention weights, set it to 0
+            # Q: why would there be a nan in the attention weights?
             attn_weights = attn_weights.masked_fill(torch.isnan(attn_weights), 0)
+
+            # apply the attention weights to encoded
             context = torch.bmm(attn_weights, encoded.unsqueeze(0))
+
+            # add the attention weights to the last decoder state
+            # Q: why does this happen?
             hc = torch.cat(
                 [decoder_hidden[0].squeeze(0), context.squeeze(1)], dim=1)
             out_hc = self.W(hc)
             decoder_output = self.linear(out_hc)
+
+            # initialize p_word
             p_word = torch.zeros([batch_size, len(self.word2id)]).to(self.device)
+
+            # calculate p_word, the probability of each word to be the next word
             p_word[:, :len(self.word2id)] = F.softmax(decoder_output, dim=1)
 
             # copy generator
             # skipped for now
 
-            last_word = decoder_output.argmax().item()
+            last_word = p_word.argmax().item()
             sentence = sentence + [last_word]
             print('sentence:')
             print(sentence)
@@ -249,4 +282,4 @@ if __name__ == "__main__":
 
         print(predicted)
 
-# in the code of the paper they also initialize the wheigts. Is this necessary?
+# Q: in the code of the paper they also initialize the wheigts. Is this necessary?
