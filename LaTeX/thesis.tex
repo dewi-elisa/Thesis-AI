@@ -151,7 +151,7 @@ Therefore, autocomplete systems need to use more complex models to be more effic
 \begin{figure}
     \centering
     \includegraphics[width=.5\linewidth]{figs/autocomplete_game.png}
-    \caption{schematic overview of the communicatoin game. \\ Figure from \protect\citeA{autocomplete}.}
+    \caption{schematic overview of the communication game. Figure from \protect\citeA{autocomplete}.}
     \label{fig:autocomplete}
 \end{figure}
 
@@ -167,7 +167,7 @@ The target sentence is described by the key words using encoding strategy $q_{\a
 
 For a model to be efficient, the number of key words needs to be as low as possible. 
 In addition, for a model to be accurate, the probability of reconstructing $x$ from $z$ needs to be as high as possible. 
-Therefore, we can define a cost and a loss, respectively:
+Therefore, a cost and a loss, respectively, can be defined:
 \begin{equation}
     \text{cost}(x,\alpha) = \mathbb{E}_{q_{\alpha}(z|x)} [\text{length}(z)]
 \end{equation}
