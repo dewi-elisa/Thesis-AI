@@ -50,11 +50,11 @@ class Encoder(nn.Module):
         print("scores:")
         print(scores)
 
-        # What happens here? It does not seem to change anyhting
+        # Q: What happens here? It does not seem to change anyhting
         # Does it replace the values in score with -inf when they are <= 0?
         # But there are no tokens <= 0 in the vocab
         # (is that why it does not seem to change anything?)
-        # answer: padding = 0 -> for when working in batches,
+        # A: padding = 0 -> for when working in batches,
         # in that case uncomment the next line
         # masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
         masked_scores = scores
@@ -79,7 +79,9 @@ class Encoder(nn.Module):
         print([self.id2word[word.item()] for word in subsentence])
         print()
 
-        return subsentence
+        log_q_alpha = torch.sum(mask * torch.log(prob_tokens) + (1 - mask) * torch.log(1 - prob_tokens))
+
+        return subsentence, log_q_alpha
 
 
 class Decoder(nn.Module):
@@ -240,6 +242,7 @@ class Decoder(nn.Module):
         print('final sentence:')
         print(sentence)
         print([self.id2word[word] for word in sentence])
+
         return sentence
 
 

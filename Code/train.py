@@ -61,18 +61,8 @@ def train_batch(opt, encoder, decoder, lambdas,
     reward_per_sample = torch.tensor([0.])
     recon_term_per_sample = torch.tensor([0.])
 
-    # Conditions for using hand-crafted encoders
-    uniform = True if opt.uniform_encoder else False
-    stopword = True if opt.stopword_encoder else False
-
-    train_decoder_only = (uniform or stopword or opt.fix_encoder)
-    if train_decoder_only:
-        assert(not opt.lagrangian)
-        encoder.eval()  # No need to train encoders
-        decoder.train()
-    else:
-        encoder.train()
-        decoder.train()
+    encoder.train()
+    decoder.train()
 
     src_seqs, trg_seqs, src_lines, trg_lines = batch  # Encoded form
     src_seqs = src_seqs.to(device)
@@ -127,30 +117,11 @@ def train_batch(opt, encoder, decoder, lambdas,
     violation = Variable(recon_loss.detach() - opt.epsilon, requires_grad=True)
 
     """
-    Set lambda here and update at the end of the training loop
-    """
-    # For fixed lambda, manually check constraints and zero out lambdas
-    if opt.fix_lambda:
-        if recon_loss <= opt.epsilon:  # Constraint satisfied
-            lambdas.data.fill_(0.)
-        else:
-            lambdas.data.fill_(opt.init_lambda)
-    if opt.set_lambda_to_0:
-        if recon_loss <= opt.epsilon:  # Constraint satisfied
-            lambdas.data.fill_(0.)
-    if lambdas.item() < 0:  # Don't do lambdas = F.relu(lambdas)!
-        lambdas.data.fill_(0.)
-    lambdas = lambdas.to(device)
-
-    """
     Decoder
     """
     optimizerD.zero_grad()
     if train_decoder_only:
         decoder_loss = - (recon_term_per_sample).sum().div(batch_size)
-    elif opt.lagrangian:
-        decoder_loss = - (lambdas.detach() *
-                          recon_term_per_sample).sum().div(batch_size)
     else:
         decoder_loss = - (opt.linear_weight *
                           recon_term_per_sample).sum().div(batch_size)
@@ -189,19 +160,6 @@ def train_batch(opt, encoder, decoder, lambdas,
         encoder_loss.backward()
         torch.nn.utils.clip_grad_norm_(encoder.parameters(), opt.clip)
         optimizerE.step()
-
-    """
-    Lagrangian multipliers
-    """
-    if (not train_decoder_only) and (opt.lagrangian):
-        optimizerL.zero_grad()
-
-        if opt.relu_vio:
-            violation = torch.clamp(violation, min=0.)
-
-        lambdas_loss = lambdas * (-violation)
-        lambdas_loss.backward()
-        optimizerL.step()
 
     obj_value = torch.mean(num_key_tokens_from_encoder) + lambdas * violation
     loss_terms = (decoder_loss.item(), encoder_loss.item(),
@@ -254,13 +212,6 @@ def train(opt,
                                           batch, batch_index, global_step,
                                           baseline)
 
-                if opt.decay_decoder_lr:
-                    schedularD.step()
-                if opt.decay_encoder_lr:
-                    schedularE.step()
-                if opt.decay_lambda_lr:
-                    schedularL.step()
-
                 pbar.set_description("Epoch {}".format(epoch))
                 pbar.set_postfix(decoder=decoder_loss)
                 pbar.update()
@@ -286,33 +237,6 @@ def train(opt,
                     writer.add_scalar(tag="lr/lambda_lr",
                                       scalar_value=utils.get_lr(optimizerL),
                                       global_step=global_step)
-                    if opt.lagrangian:
-                        # writer.add_scalar(tag="loss/encoder_loss",
-                        #                   scalar_value=encoder_loss,
-                        #                   global_step=global_step)
-                        writer.add_scalar(tag="loss/key_log_likelihood",
-                                          scalar_value=key_likelihood,
-                                          global_step=global_step)
-                        writer.add_scalar(tag="loss/reward",
-                                          scalar_value=reward,
-                                          global_step=global_step)
-                        if opt.use_baseline:
-                            writer.add_scalar(tag="loss/baseline",
-                                              scalar_value=baseline,
-                                              global_step=global_step)
-                        writer.add_scalar(tag="loss/recon_log_likelihood",
-                                          scalar_value=recon_term,
-                                          global_step=global_step)
-                        writer.add_scalar(tag="loss/lambda",
-                                          scalar_value=lambdas_mean,
-                                          global_step=global_step)
-                        writer.add_scalar(tag="loss/violation",
-                                          scalar_value=violation,
-                                          global_step=global_step)
-                        writer.add_scalar(tag="loss/obj_value",
-                                          scalar_value=obj_value,
-                                          global_step=global_step)
-
                 # Evaluation
                 if global_step % opt.save_every == 0:
                     utils.save_model(opt, exp, global_step,
