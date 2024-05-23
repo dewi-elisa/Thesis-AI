@@ -81,7 +81,7 @@ class Encoder(nn.Module):
 
         # calculate log q_alpha(z|x)
         log_q_alpha = torch.sum(mask * torch.log(prob_tokens)
-                                + (1 - mask) * torch.log(1 - prob_tokens))
+                                + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
 
         return subsentence, log_q_alpha
 
@@ -127,7 +127,6 @@ class Decoder(nn.Module):
         # build vocab
         # Q: in the code of the paper they build a dynamic vocab here, why is this needed?
         # A: not necessary for now, just use a single static vocab
-        # new Q: can I just use word2id and id2word from before?
 
         # embed the tokens
         embedded = self.encoder_embedding(tokens)
@@ -287,7 +286,7 @@ if __name__ == "__main__":
 
         src_seqs = src_seqs.to(device)
         trg_seqs = trg_seqs.to(device)
-        keywords = encoder(src_seqs)
+        keywords, log_q_alpha = encoder(src_seqs)
         predicted = decoder(keywords, trg_seqs)
 
         print(predicted)
