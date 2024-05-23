@@ -79,7 +79,8 @@ class Encoder(nn.Module):
         print([self.id2word[word.item()] for word in subsentence])
         print()
 
-        log_q_alpha = torch.sum(mask * torch.log(prob_tokens) + (1 - mask) * torch.log(1 - prob_tokens))
+        log_q_alpha = torch.sum(mask * torch.log(prob_tokens)
+                                + (1 - mask) * torch.log(1 - prob_tokens))
 
         return subsentence, log_q_alpha
 
@@ -211,6 +212,7 @@ class Decoder(nn.Module):
 
             # if there is a nan in the attention weights, set it to 0
             # Q: why would there be a nan in the attention weights?
+            # A: If an entire column is -inf, maybe this happens when batching and masking
             attn_weights = attn_weights.masked_fill(torch.isnan(attn_weights), 0)
 
             # apply the attention weights to encoded
@@ -218,6 +220,7 @@ class Decoder(nn.Module):
 
             # add the attention weights to the last decoder state
             # Q: why does this happen?
+            # A: way to add attention (see Git)
             hc = torch.cat(
                 [decoder_hidden[0].squeeze(0), context.squeeze(1)], dim=1)
             out_hc = self.W(hc)
@@ -286,3 +289,4 @@ if __name__ == "__main__":
         print(predicted)
 
 # Q: in the code of the paper they also initialize the wheigts. Is this necessary?
+# A: not vital, maybe for later (see Git)
