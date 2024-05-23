@@ -120,11 +120,8 @@ def train_batch(opt, encoder, decoder, lambdas,
     Decoder
     """
     optimizerD.zero_grad()
-    if train_decoder_only:
-        decoder_loss = - (recon_term_per_sample).sum().div(batch_size)
-    else:
-        decoder_loss = - (opt.linear_weight *
-                          recon_term_per_sample).sum().div(batch_size)
+    decoder_loss = - (opt.linear_weight *
+                      recon_term_per_sample).sum().div(batch_size)
     decoder_loss.backward()
     torch.nn.utils.clip_grad_norm_(decoder.parameters(), opt.clip)
     optimizerD.step()
@@ -132,34 +129,34 @@ def train_batch(opt, encoder, decoder, lambdas,
     """
     Encoder
     """
-    if not train_decoder_only:
-        optimizerE.zero_grad()
+    optimizerE.zero_grad()
 
-        key_likelihood_per_token = - bce_loss_per_token(
-            key_prob_over_tokens.view(-1),
-            key_mask.float().view(-1))
-        key_likelihood_per_sample = torch.sum(
-            key_likelihood_per_token.view(batch_size, max_src_len),
-            dim=1).div(num_src_tokens)
+    key_likelihood_per_token = - bce_loss_per_token(
+        key_prob_over_tokens.view(-1),
+        key_mask.float().view(-1))
+    key_likelihood_per_sample = torch.sum(
+        key_likelihood_per_token.view(batch_size, max_src_len),
+        dim=1).div(num_src_tokens)
 
-        recon_term_per_sample.detach_()
-        if opt.lagrangian:
-            reward_per_sample = (- (num_key_tokens_from_encoder)
-                                 + (lambdas.detach() *
-                                    (recon_term_per_sample + opt.epsilon)))
-            if opt.use_baseline:
-                reward_per_sample -= baseline
-        else:  # Linear reward
-            reward_per_sample = (- (num_key_tokens_from_encoder)
-                                 + (opt.linear_weight *
-                                    recon_term_per_sample))
+    recon_term_per_sample.detach_()
+    if opt.lagrangian:
+        reward_per_sample = (- (num_key_tokens_from_encoder)
+                                + (lambdas.detach() *
+                                (recon_term_per_sample + opt.epsilon)))
+        if opt.use_baseline:
+            reward_per_sample -= baseline
+    else:  # Linear reward
+        reward_per_sample = (- (num_key_tokens_from_encoder)
+                                + (opt.linear_weight *
+                                recon_term_per_sample))
 
-        encoder_loss = - (key_likelihood_per_sample *
-                          reward_per_sample).sum().div(batch_size)
+    encoder_loss = - (key_likelihood_per_sample *
+                        reward_per_sample).sum().div(batch_size)
 
-        encoder_loss.backward()
-        torch.nn.utils.clip_grad_norm_(encoder.parameters(), opt.clip)
-        optimizerE.step()
+    encoder_loss.backward()
+    torch.nn.utils.clip_grad_norm_(encoder.parameters(), opt.clip)
+    optimizerE.step()
+
 
     obj_value = torch.mean(num_key_tokens_from_encoder) + lambdas * violation
     loss_terms = (decoder_loss.item(), encoder_loss.item(),

@@ -79,6 +79,7 @@ class Encoder(nn.Module):
         print([self.id2word[word.item()] for word in subsentence])
         print()
 
+        # calculate log q_alpha(z|x)
         log_q_alpha = torch.sum(mask * torch.log(prob_tokens)
                                 + (1 - mask) * torch.log(1 - prob_tokens))
 
@@ -246,7 +247,10 @@ class Decoder(nn.Module):
         print(sentence)
         print([self.id2word[word] for word in sentence])
 
-        return sentence
+        # calculate log p_beta(x|z)
+        log_p_beta = torch.sum(torch.log(p_word))
+
+        return sentence, log_p_beta
 
 
 if __name__ == "__main__":
