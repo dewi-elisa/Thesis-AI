@@ -74,11 +74,11 @@ class Encoder(nn.Module):
         print([self.id2word[word.item()] for word in subsentence])
         print()
 
-        # calculate log q_alpha(z|x)
-        log_q_alpha = torch.sum(mask * torch.log(prob_tokens)
+        # Calculate the log probability of the mask
+        log_prob_mask = torch.sum(mask * torch.log(prob_tokens)
                                 + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
 
-        return subsentence, log_q_alpha
+        return subsentence, log_prob_mask
 
 
 class Decoder(nn.Module):
@@ -158,10 +158,10 @@ class Decoder(nn.Module):
         print(sentence)
         print([self.id2word[word] for word in sentence])
 
-        # calculate log p_beta(x|z)
-        log_p_beta = torch.sum(torch.log(torch.Tensor(p_words)))
+        # Calculate the log probability for the sentence
+        log_prob_sentence = torch.sum(torch.log(torch.Tensor(p_words)))
 
-        return sentence, log_p_beta
+        return sentence, log_prob_sentence
 
     def teacher_forcing_decode(self, tokens, trg_seqs,
                                encoder_hidden, encoded,
