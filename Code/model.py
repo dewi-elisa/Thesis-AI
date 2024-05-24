@@ -1,14 +1,9 @@
-import os
-import re
-import copy
-import nltk
 import configargparse
 
 import torch
 import torch.utils.data
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 
 import data
 import utils
@@ -139,7 +134,7 @@ class Decoder(nn.Module):
         print(encoded)
 
         # decode
-        batch_size, max_seq_len = 1, tokens.size()[0]  # for now, otherwise uncomment next line
+        batch_size = 1  # for now, otherwise uncomment next line
         # batch_size, max_seq_len = tokens.size()
 
         print('batch_size:')
@@ -155,7 +150,9 @@ class Decoder(nn.Module):
         print('last word:')
         print(last_word)
 
-        sentence, p_words = self.teacher_forcing_decode(tokens, trg_seqs, encoder_hidden, encoded, decoder_hidden, last_word)
+        sentence, p_words = self.teacher_forcing_decode(tokens, trg_seqs,
+                                                        encoder_hidden, encoded,
+                                                        decoder_hidden, last_word)
 
         print('final sentence:')
         print(sentence)
@@ -166,18 +163,21 @@ class Decoder(nn.Module):
 
         return sentence, log_p_beta
 
-    def teacher_forcing_decode(self, tokens, trg_seqs, encoder_hidden, encoded, decoder_hidden, last_word):
-        batch_size, max_seq_len = 1, tokens.size()[0]
+    def teacher_forcing_decode(self, tokens, trg_seqs,
+                               encoder_hidden, encoded,
+                               decoder_hidden, last_word):
+        batch_size = 1
         sentence = [last_word.item()]
         p_words = []
-        
-        for word in range(max_seq_len):
-            p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded, decoder_hidden, last_word)
+
+        for word in trg_seqs.squeeze(0):
+            p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded,
+                                                 decoder_hidden, last_word)
             print('p_word:')
             print(p_word)
             print('trg_seqs:')
             print(trg_seqs)
-            last_word = trg_seqs.squeeze(0)[word].item()
+            last_word = word.item()
             print('last_word:')
             print(last_word)
             sentence = sentence + [last_word]
@@ -195,7 +195,8 @@ class Decoder(nn.Module):
         p_words = []
 
         for decoder_step in range(max_seq_len):
-            p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded, decoder_hidden, last_word)
+            p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded,
+                                                 decoder_hidden, last_word)
 
             last_word = p_word.argmax().item()
             sentence = sentence + [last_word]
@@ -242,7 +243,7 @@ class Decoder(nn.Module):
         # attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
         #                       encoded.transpose(1, 2))
         attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
-                                encoded.transpose(0, 1).unsqueeze(0))
+                              encoded.transpose(0, 1).unsqueeze(0))
 
         print('attn_prod:')
         print(attn_prod)
@@ -289,6 +290,7 @@ class Decoder(nn.Module):
 
         return p_word, decoder_hidden
 
+
 if __name__ == "__main__":
     parser = configargparse.ArgumentParser(description="train.py")
 
@@ -314,6 +316,7 @@ if __name__ == "__main__":
     (train_ae_loader, train_key_loader,
      val_ae_loader, val_key_loader,
      test_ae_loader, test_key_loader) = loaders
+
     for batch_index, batch in enumerate(train_ae_loader):
         src_seqs, trg_seqs, src_lines, trg_lines = batch  # Encoded form
 
