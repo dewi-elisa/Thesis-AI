@@ -155,85 +155,47 @@ class Decoder(nn.Module):
         print('last word:')
         print(last_word)
 
+        sentence, p_words = self.teacher_forcing_decode(tokens, trg_seqs, encoder_hidden, encoded, decoder_hidden, last_word)
+
+        print('final sentence:')
+        print(sentence)
+        print([self.id2word[word] for word in sentence])
+
+        # calculate log p_beta(x|z)
+        log_p_beta = torch.sum(torch.log(torch.Tensor(p_words)))
+
+        return sentence, log_p_beta
+
+    def teacher_forcing_decode(self, tokens, trg_seqs, encoder_hidden, encoded, decoder_hidden, last_word):
+        batch_size, max_seq_len = 1, tokens.size()[0]
         sentence = [last_word.item()]
+        p_words = []
+        
+        for word in range(max_seq_len):
+            p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded, decoder_hidden, last_word)
+            print('p_word:')
+            print(p_word)
+            print('trg_seqs:')
+            print(trg_seqs)
+            last_word = trg_seqs.squeeze(0)[word].item()
+            print('last_word:')
+            print(last_word)
+            sentence = sentence + [last_word]
+            print('sentence:')
+            print(sentence)
+            print([self.id2word[word2] for word2 in sentence])
+            last_word = torch.tensor([last_word] * batch_size).to(self.device)
+            p_words.append(p_word.squeeze(0)[last_word])
+
+        return sentence, p_words
+
+    def greedy_decode(self, tokens, encoder_hidden, encoded, decoder_hidden, last_word):
+        batch_size, max_seq_len = 1, tokens.size()[0]
+        sentence = [last_word.item()]
+        p_words = []
 
         for decoder_step in range(max_seq_len):
-            # embed the last generated word (or the <sos> symbol if there are none)
-            embedded2 = self.decoder_embedding(last_word).view(batch_size, -1)
-            embedded2 = F.relu(F.dropout(embedded2, p=0.1))
-
-            # concatenate the context vector to the embedding
-            embedded3 = torch.cat((embedded2, encoder_hidden.view(batch_size, -1)), dim=-1)
-
-            # decode the embedded token -> generate the next word
-            decoded, decoder_hidden = self.decoder(
-                embedded3.view(batch_size, 1, self.embedding_dim * 4),
-                decoder_hidden)
-
-            print('decoded:')
-            print(decoded)
-
-            '''
-            Luong's global attention
-            '''
-            # first, look which tokens are words
-            # mask = tokens.gt(0).unsqueeze(2).expand_as(encoded).float()
-            mask = tokens.gt(0).unsqueeze(1).expand_as(encoded).float()
-
-            print('mask:')
-            print(mask)
-
-            # then, apply the mask to encoded
-            encoded = encoded.mul(mask)
-
-            # put the decoder hidden state in the attention layer and apply to encoded
-            # attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
-            #                       encoded.transpose(1, 2))
-            attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
-                                  encoded.transpose(0, 1).unsqueeze(0))
-
-            print('attn_prod:')
-            print(attn_prod)
-
-            '''
-            mask softmax
-            '''
-            max_key_len = max_seq_len  # check this
-
-            # look at the tokens that are words
-            mask_attn = tokens.gt(0).view(
-                batch_size, 1, max_key_len).to(self.device)
-
-            # replace the tokens that are not a word by -inf
-            attn_prod.masked_fill_(mask_attn.bitwise_not(), -float('inf'))
-
-            # put the attention probabilities in a softmax
-            attn_weights = F.softmax(attn_prod, dim=2)
-
-            # if there is a nan in the attention weights, set it to 0
-            # Q: why would there be a nan in the attention weights?
-            # A: If an entire column is -inf, maybe this happens when batching and masking
-            attn_weights = attn_weights.masked_fill(torch.isnan(attn_weights), 0)
-
-            # apply the attention weights to encoded
-            context = torch.bmm(attn_weights, encoded.unsqueeze(0))
-
-            # add the attention weights to the last decoder state
-            # Q: why does this happen?
-            # A: way to add attention (see Git)
-            hc = torch.cat(
-                [decoder_hidden[0].squeeze(0), context.squeeze(1)], dim=1)
-            out_hc = self.W(hc)
-            decoder_output = self.linear(out_hc)
-
-            # initialize p_word
-            p_word = torch.zeros([batch_size, len(self.word2id)]).to(self.device)
-
-            # calculate p_word, the probability of each word to be the next word
-            p_word[:, :len(self.word2id)] = F.softmax(decoder_output, dim=1)
-
-            # copy generator
-            # skipped for now
+            p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded, decoder_hidden, last_word)
 
             last_word = p_word.argmax().item()
             sentence = sentence + [last_word]
@@ -241,16 +203,91 @@ class Decoder(nn.Module):
             print(sentence)
             print([self.id2word[word] for word in sentence])
             last_word = torch.tensor([last_word] * batch_size).to(self.device)
+            p_words.append(p_word[last_word])
 
-        print('final sentence:')
-        print(sentence)
-        print([self.id2word[word] for word in sentence])
+        return sentence, p_words
 
-        # calculate log p_beta(x|z)
-        log_p_beta = torch.sum(torch.log(p_word))
+    def decode(self, tokens, encoder_hidden, encoded, decoder_hidden, last_word):
+        batch_size, max_key_len = 1, tokens.size()
 
-        return sentence, log_p_beta
+        # embed the last generated word (or the <sos> symbol if there are none)
+        embedded2 = self.decoder_embedding(last_word).view(batch_size, -1)
+        embedded2 = F.relu(F.dropout(embedded2, p=0.1))
 
+        # concatenate the context vector to the embedding
+        embedded3 = torch.cat((embedded2, encoder_hidden.view(batch_size, -1)), dim=-1)
+
+        # decode the embedded token -> generate the next word
+        decoded, decoder_hidden = self.decoder(
+            embedded3.view(batch_size, 1, self.embedding_dim * 4),
+            decoder_hidden)
+
+        print('decoded:')
+        print(decoded)
+
+        '''
+        Luong's global attention
+        '''
+        # first, look which tokens are words
+        # mask = tokens.gt(0).unsqueeze(2).expand_as(encoded).float()
+        mask = tokens.gt(0).unsqueeze(1).expand_as(encoded).float()
+
+        print('mask:')
+        print(mask)
+
+        # then, apply the mask to encoded
+        encoded = encoded.mul(mask)
+
+        # put the decoder hidden state in the attention layer and apply to encoded
+        # attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
+        #                       encoded.transpose(1, 2))
+        attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
+                                encoded.transpose(0, 1).unsqueeze(0))
+
+        print('attn_prod:')
+        print(attn_prod)
+
+        '''
+        mask softmax
+        '''
+        max_key_len = tokens.size()[0]  # check this
+
+        # look at the tokens that are words
+        mask_attn = tokens.gt(0).view(
+            batch_size, 1, max_key_len).to(self.device)
+
+        # replace the tokens that are not a word by -inf
+        attn_prod.masked_fill_(mask_attn.bitwise_not(), -float('inf'))
+
+        # put the attention probabilities in a softmax
+        attn_weights = F.softmax(attn_prod, dim=2)
+
+        # if there is a nan in the attention weights, set it to 0
+        # Q: why would there be a nan in the attention weights?
+        # A: If an entire column is -inf, maybe this happens when batching and masking
+        attn_weights = attn_weights.masked_fill(torch.isnan(attn_weights), 0)
+
+        # apply the attention weights to encoded
+        context = torch.bmm(attn_weights, encoded.unsqueeze(0))
+
+        # add the attention weights to the last decoder state
+        # Q: why does this happen?
+        # A: way to add attention (see Git)
+        hc = torch.cat(
+            [decoder_hidden[0].squeeze(0), context.squeeze(1)], dim=1)
+        out_hc = self.W(hc)
+        decoder_output = self.linear(out_hc)
+
+        # initialize p_word
+        p_word = torch.zeros([batch_size, len(self.word2id)]).to(self.device)
+
+        # calculate p_word, the probability of each word to be the next word
+        p_word[:, :len(self.word2id)] = F.softmax(decoder_output, dim=1)
+
+        # copy generator
+        # skipped for now
+
+        return p_word, decoder_hidden
 
 if __name__ == "__main__":
     parser = configargparse.ArgumentParser(description="train.py")
@@ -287,9 +324,18 @@ if __name__ == "__main__":
         src_seqs = src_seqs.to(device)
         trg_seqs = trg_seqs.to(device)
         keywords, log_q_alpha = encoder(src_seqs)
-        predicted = decoder(keywords, trg_seqs)
+        predicted, log_p_beta = decoder(keywords, trg_seqs)
 
+        print()
+        print("sentence - target:")
+        print(src_lines)
+        print(trg_lines)
+        print('key words:')
+        print(keywords)
+        print([id2word[word.item()] for word in keywords])
+        print("sentence - predicted")
         print(predicted)
+        print([id2word[word] for word in predicted])
 
 # Q: in the code of the paper they also initialize the wheigts. Is this necessary?
 # A: not vital, maybe for later (see Git)
