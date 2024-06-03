@@ -5,3 +5,5 @@
 # and two folders
 !/Code
 !/LaTeX
+# and a file
+!Midterm presentation.pdf
