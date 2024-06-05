@@ -30,7 +30,7 @@ class Encoder(nn.Module):
                                 bias=True)
 
     def forward(self, tokens):
-        print(tokens)
+        # print(tokens)
 
         batch_size, max_len = tokens.size()
 
@@ -42,8 +42,8 @@ class Encoder(nn.Module):
         encoder_outputs, _ = self.encoder(embedded)
         scores = self.linear(encoder_outputs).view(batch_size, -1)
 
-        print("scores:")
-        print(scores)
+        # print("scores:")
+        # print(scores)
 
         # Q: What happens here? It does not seem to change anyhting
         # Does it replace the values in score with -inf when they are <= 0?
@@ -54,8 +54,8 @@ class Encoder(nn.Module):
         # masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
         masked_scores = scores
 
-        print("masked scores:")
-        print(masked_scores)
+        # print("masked scores:")
+        # print(masked_scores)
 
         # Apply sigmoid
         prob_tokens = torch.sigmoid(masked_scores)
@@ -63,22 +63,22 @@ class Encoder(nn.Module):
         # Sample a mask with Bernoulli
         mask = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
 
-        print("mask:")
-        print(mask)
+        # print("mask:")
+        # print(mask)
 
         # Apply the mask
         subsentence = tokens[mask]
 
-        print("subsentence:")
-        print(subsentence)
-        print([self.id2word[word.item()] for word in subsentence])
-        print()
+        # print("subsentence:")
+        # print(subsentence)
+        # print([self.id2word[word.item()] for word in subsentence])
+        # print()
 
         # Calculate the log probability of the mask
         log_prob_mask = torch.sum(mask * torch.log(prob_tokens)
-                                + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
+                                  + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
 
-        return subsentence, log_prob_mask
+        return subsentence, log_prob_mask, mask
 
 
 class Decoder(nn.Module):
@@ -130,15 +130,15 @@ class Decoder(nn.Module):
         # encode the tokens
         encoded, (encoder_hidden, _) = self.encoder(embedded)
 
-        print('encoded:')
-        print(encoded)
+        # print('encoded:')
+        # print(encoded)
 
         # decode
         batch_size = 1  # for now, otherwise uncomment next line
         # batch_size, max_seq_len = tokens.size()
 
-        print('batch_size:')
-        print(batch_size)  # 1
+        # print('batch_size:')
+        # print(batch_size)  # 1
 
         last_word = torch.tensor([self.word2id["<sos>"]] * batch_size).to(self.device)
         # Q: the paper code uses dim=1 -> because of batches? it gives me an error with dim=1
@@ -147,16 +147,16 @@ class Decoder(nn.Module):
         decoder_hidden = (encoder_hidden.view(1, batch_size, self.embedding_dim * 2),
                           torch.zeros(1, batch_size, self.embedding_dim * 2).to(self.device))
 
-        print('last word:')
-        print(last_word)
+        # print('last word:')
+        # print(last_word)
 
         sentence, p_words = self.teacher_forcing_decode(tokens, trg_seqs,
                                                         encoder_hidden, encoded,
                                                         decoder_hidden, last_word)
 
-        print('final sentence:')
-        print(sentence)
-        print([self.id2word[word] for word in sentence])
+        # print('final sentence:')
+        # print(sentence)
+        # print([self.id2word[word] for word in sentence])
 
         # Calculate the log probability for the sentence
         log_prob_sentence = torch.sum(torch.log(torch.Tensor(p_words)))
@@ -173,17 +173,17 @@ class Decoder(nn.Module):
         for word in trg_seqs.squeeze(0):
             p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded,
                                                  decoder_hidden, last_word)
-            print('p_word:')
-            print(p_word)
-            print('trg_seqs:')
-            print(trg_seqs)
+            # print('p_word:')
+            # print(p_word)
+            # print('trg_seqs:')
+            # print(trg_seqs)
             last_word = word.item()
-            print('last_word:')
-            print(last_word)
+            # print('last_word:')
+            # print(last_word)
             sentence = sentence + [last_word]
-            print('sentence:')
-            print(sentence)
-            print([self.id2word[word2] for word2 in sentence])
+            # print('sentence:')
+            # print(sentence)
+            # print([self.id2word[word2] for word2 in sentence])
             last_word = torch.tensor([last_word] * batch_size).to(self.device)
             p_words.append(p_word.squeeze(0)[last_word])
 
@@ -200,9 +200,9 @@ class Decoder(nn.Module):
 
             last_word = p_word.argmax().item()
             sentence = sentence + [last_word]
-            print('sentence:')
-            print(sentence)
-            print([self.id2word[word] for word in sentence])
+            # print('sentence:')
+            # print(sentence)
+            # print([self.id2word[word] for word in sentence])
             last_word = torch.tensor([last_word] * batch_size).to(self.device)
             p_words.append(p_word[last_word])
 
@@ -223,8 +223,8 @@ class Decoder(nn.Module):
             embedded3.view(batch_size, 1, self.embedding_dim * 4),
             decoder_hidden)
 
-        print('decoded:')
-        print(decoded)
+        # print('decoded:')
+        # print(decoded)
 
         '''
         Luong's global attention
@@ -233,8 +233,8 @@ class Decoder(nn.Module):
         # mask = tokens.gt(0).unsqueeze(2).expand_as(encoded).float()
         mask = tokens.gt(0).unsqueeze(1).expand_as(encoded).float()
 
-        print('mask:')
-        print(mask)
+        # print('mask:')
+        # print(mask)
 
         # then, apply the mask to encoded
         encoded = encoded.mul(mask)
@@ -245,8 +245,8 @@ class Decoder(nn.Module):
         attn_prod = torch.bmm(self.attn(decoder_hidden[0].transpose(0, 1)),
                               encoded.transpose(0, 1).unsqueeze(0))
 
-        print('attn_prod:')
-        print(attn_prod)
+        # print('attn_prod:')
+        # print(attn_prod)
 
         '''
         mask softmax
@@ -290,6 +290,73 @@ class Decoder(nn.Module):
 
         return p_word, decoder_hidden
 
+    def postprocess(self, key_seqs, key_mask, encoded_lines):
+        """
+        Receives (key_mask, encoded_lines) or (key_seqs, encoded_lines) pairs.
+
+        (key_mask, encoded_lines): Given key_mask and src_lines, generate
+            key_seqs (contains <unk>) and key_lines (contains original tokens).
+
+        (key_seqs, encoded_lines): Given key_seqs and key_lines, simply apply
+            postprocessing while keeping all tokens (key_mask=key_seqs.gt(0)).
+        """
+        if key_mask is None:
+            key_mask = key_seqs.gt(0)  # Keep all
+
+        processed_key_seqs = torch.zeros(key_mask.size()).long()
+        processed_key_lines = []
+        for i, line in enumerate(encoded_lines):  # batch_size
+            tokens = self.tokenizer.encoded_line_to_tokens(line)
+            processed = []
+            for j, token in enumerate(tokens):  # max_seq_len
+                if token == "<eos>":  # With <eos>
+                    processed.append(token)
+                    break
+                if self.whitespace == "replace":
+                    if key_mask[i][j] == 1:  # Keep
+                        if token == "#":
+                            if processed and processed[-1] != "#":
+                                processed.append(token)
+                        else:
+                            processed.append(token)
+                    else:  # Drop
+                        if processed and processed[-1] != "#":
+                            # Replace with whitespace
+                            processed.append("#")
+                elif self.whitespace == "remove":
+                    if key_mask[i][j] == 1:  # Keep
+                        if token == "#":  # Remove whitespace
+                            continue
+                        else:
+                            processed.append(token)
+                    else:  # Drop
+                        continue
+                elif self.whitespace == "keep":
+                    if key_mask[i][j] == 1:  # Keep
+                        processed.append(token)
+                    else:  # Drop
+                        if token == "#":  # Keep whitespace
+                            processed.append(token)
+                        else:
+                            continue
+                else:
+                    if key_mask[i][j] == 1:  # Keep
+                        processed.append(token)
+                    else:  # Drop
+                        continue
+            if processed and processed[-1] == "#":
+                processed = processed[:-1]  # Remove trailing whitespace
+            if self.capitalization == "remove":
+                processed = [token for token in processed
+                             if token not in ["<capf>", "<capa>"]]
+
+            seq = self.tokenizer.tokens_to_tensor(processed, self.word2id)
+            processed_key_seqs[i][:seq.size(0)] = seq
+            encoded_line = self.tokenizer.tokens_to_encoded_line(processed)
+            processed_key_lines.append(encoded_line)
+        processed_key_seqs = processed_key_seqs.to(self.device)
+        return processed_key_seqs, processed_key_lines  # Encoded
+
 
 if __name__ == "__main__":
     parser = configargparse.ArgumentParser(description="train.py")
@@ -320,25 +387,25 @@ if __name__ == "__main__":
     for batch_index, batch in enumerate(train_ae_loader):
         src_seqs, trg_seqs, src_lines, trg_lines = batch  # Encoded form
 
-        print("sentence:")
-        print(src_lines)
-        print(trg_lines)
+        # print("sentence:")
+        # print(src_lines)
+        # print(trg_lines)
 
         src_seqs = src_seqs.to(device)
         trg_seqs = trg_seqs.to(device)
-        keywords, log_q_alpha = encoder(src_seqs)
+        keywords, log_q_alpha, mask = encoder(src_seqs)
         predicted, log_p_beta = decoder(keywords, trg_seqs)
 
-        print()
-        print("sentence - target:")
-        print(src_lines)
-        print(trg_lines)
-        print('key words:')
-        print(keywords)
-        print([id2word[word.item()] for word in keywords])
-        print("sentence - predicted")
-        print(predicted)
-        print([id2word[word] for word in predicted])
+        # print()
+        # print("sentence - target:")
+        # print(src_lines)
+        # print(trg_lines)
+        # print('key words:')
+        # print(keywords)
+        # print([id2word[word.item()] for word in keywords])
+        # print("sentence - predicted")
+        # print(predicted)
+        # print([id2word[word] for word in predicted])
 
 # Q: in the code of the paper they also initialize the wheigts. Is this necessary?
 # A: not vital, maybe for later (see Git)

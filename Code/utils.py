@@ -68,16 +68,15 @@ def init_writer(opt, exp):
     return writer
 
 
-def save_model(opt, exp, global_step, encoder, decoder, lambdas):
+def save_model(opt, exp, encoder, decoder):
     path_model = os.path.join(opt.root, opt.exp_dir, "model")
     if not os.path.exists(path_model):
         os.makedirs(path_model)
 
-    save_path = os.path.join(path_model, "{}_{}.pt".format(exp, global_step))
+    save_path = os.path.join(path_model, "{}.pt".format(exp))
     save_dict = {"decoder": decoder.state_dict()}
     if (not opt.uniform_encoder) and (not opt.stopword_encoder):
         save_dict.update({"encoder": encoder.state_dict()})
-        save_dict.update({"lambdas": lambdas})
     torch.save(save_dict, save_path)
     print("[Util] Saved model to {}.".format(save_path))
 

@@ -396,8 +396,6 @@ def evaluate(opt,
              data_type,
              ae_loader,
              key_loader,
-             global_step,
-             writer,
              pbar,
              log=False,
              print_only=["train"]):
@@ -417,49 +415,6 @@ def evaluate(opt,
         _, _, _, src_tokens, key_tokens, out_tokens = zip(*ae_results)
         autoencoder_bleu = get_bleu(src_tokens, out_tokens)
 
-        if writer and pbar:
-            # NOTE Do not count whitespace
-            num_key_tokens = sum([len([token for token in tokens
-                                       if token != "#"])
-                                  for tokens in key_tokens])
-            num_src_tokens = sum([len([token for token in tokens
-                                       if token != "#"])
-                                  for tokens in src_tokens])
-            kept_perc = num_key_tokens / num_src_tokens
-            writer.add_scalar(tag="{}/kept_perc (excl. whitespace)".format(data_type),  # noqa
-                              scalar_value=kept_perc,
-                              global_step=global_step)
-
-            # Exact match
-            writer.add_scalar(tag="{}/trainedE_acc".format(data_type),
-                              scalar_value=autoencoder_acc,
-                              global_step=global_step)
-            if opt.beam_size > 1:
-                writer.add_scalar(tag="{}/trainedE_mrr".format(data_type),
-                                  scalar_value=ae_mrr,
-                                  global_step=global_step)
-            # BLEU
-            writer.add_scalar(tag="{}/trainedE_bleu".format(data_type),
-                              scalar_value=autoencoder_bleu,
-                              global_step=global_step)
-            # Recon loss (negative log likelihood)
-            writer.add_scalar(tag="{}/trainedE_nll".format(data_type),
-                              scalar_value=ae_recon_loss,
-                              global_step=global_step)
-
-            if opt.log_autoencoder_text or log:
-                for src, key, out, _, _, _ in ae_results[:20]:
-                    tag = "[AE ({})] SRC: {}".format(data_type, src)
-                    text_string = "KEY: {} → OUT: {}".format(key, out)
-                    writer.add_text(tag=tag,
-                                    text_string=text_string,
-                                    global_step=global_step)
-            if opt.verbose_autoencoder and (data_type in print_only):
-                pbar.write("\n[AE ({})] Step: {} - {}\n".format(
-                    data_type, global_step, exp))
-                pbar.write("\n".join(["SRC: {}\nKEY: {}\nOUT: {} {}\n".format(
-                    src, key, out, u"\u2713" if src == out else "")
-                    for src, key, out, _, _, _ in ae_results[:opt.n]]))
     if key_loader:
         (key_results, key_recon_loss, key_mrr,
          key_predictions) = eval_all_batch(opt,
@@ -473,56 +428,6 @@ def evaluate(opt,
 
         _, _, _, key_tokens, trg_tokens, out_tokens = zip(*key_results)
         keyword_bleu = get_bleu(trg_tokens, out_tokens)
-
-        if writer and pbar:
-            # Exact match
-            encoder_type = "uniformE"
-
-            # NOTE Do not count whitespace
-            num_key_tokens = sum([len([token for token in tokens
-                                       if token != "#"])
-                                  for tokens in key_tokens])
-            num_src_tokens = sum([len([token for token in tokens
-                                       if token != "#"])
-                                  for tokens in src_tokens])
-            kept_perc = num_key_tokens / num_src_tokens
-            writer.add_scalar(tag="{}/kept_perc_excl_whitespace".format(data_type),  # noqa
-                              scalar_value=kept_perc,
-                              global_step=global_step)
-
-            writer.add_scalar(tag="{}/{}_acc".format(data_type,
-                                                     encoder_type),
-                              scalar_value=keyword_acc,
-                              global_step=global_step)
-            if opt.beam_size > 1:
-                writer.add_scalar(tag="{}/{}_mrr".format(data_type,
-                                                         encoder_type),
-                                  scalar_value=key_mrr,
-                                  global_step=global_step)
-            # BLEU
-            writer.add_scalar(tag="{}/{}_bleu".format(data_type,
-                                                      encoder_type),
-                              scalar_value=keyword_bleu,
-                              global_step=global_step)
-            # Recon loss (negative log likelihoods)
-            writer.add_scalar(tag="{}/{}_nll".format(data_type,
-                                                     encoder_type),
-                              scalar_value=key_recon_loss,
-                              global_step=global_step)
-            if opt.log_keyword_text or log:
-                for key, trg, out, _, _, _ in key_results[:20]:
-                    tag = "[K ({})] KEY: {} → TRG: {}".format(
-                        data_type, key, trg)
-                    text_string = "OUT: {}".format(out)
-                    writer.add_text(tag=tag,
-                                    text_string=text_string,
-                                    global_step=global_step)
-            if opt.verbose_keyword and (data_type in print_only):
-                pbar.write("\n[K ({})] Step: {} - {}\n".format(
-                    data_type, global_step, exp))
-                pbar.write("\n".join(["KEY: {}\nTRG: {}\nOUT: {} {}\n".format(
-                    key, trg, out, u"\u2713" if trg == out else "")
-                    for key, trg, out, _, _, _ in key_results[:opt.n]]))
 
 
 def evaluate_dataset(opt,
