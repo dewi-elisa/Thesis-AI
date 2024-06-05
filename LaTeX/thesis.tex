@@ -122,25 +122,25 @@ Science Park 900\\
 
 \chapter*{Abstract}
 % TODO
-\textbf{Key words:} 
+\textbf{keywords:} 
 
 \tableofcontents
 
 \chapter{Introduction}
 % What am I researching? bruggetje met taal
 % \begin{itemize}
-%     \item key words $\rightarrow$ sentence
+%     \item keywords $\rightarrow$ sentence
 %     \item efficient, accurate, interpretable
 %     \item this research: segmentation model more effective, natural, flexible than a bit mask?
 % \end{itemize}
 
 What if machines can read our mind? 
-If we can give a machine a few key words and let the machine generate a sentence from these key words, our lives would become more productive and efficient. 
+If we can give a machine a few keywords and let the machine generate a sentence from these keywords, our lives would become more productive and efficient. 
 This is what autocomplete systems are trying to achieve. 
-\textcolor{orange}{The way in which we choose the key words is also important. 
-Taking just the first or the last few words of a sentence as key words usually does not capture the full meaning of the sentence.} 
-For example, if someone want to capture the meaning of 'I live in Amsterdam' in a few key words, the words 'live Amsterdam' would probably be choosen. 
-Thus, the key words come from multiple places in the sentence. 
+\textcolor{orange}{The way in which we choose the keywords is also important. 
+Taking just the first or the last few words of a sentence as keywords usually does not capture the full meaning of the sentence.} 
+For example, if someone want to capture the meaning of 'I live in Amsterdam' in a few keywords, the words 'live Amsterdam' would probably be choosen. 
+Thus, the keywords come from multiple places in the sentence. 
 Therefore, autocomplete systems need to use more complex models to be more efficient and accurate. 
 
 \section{Literature review}
@@ -155,17 +155,17 @@ Therefore, autocomplete systems need to use more complex models to be more effic
     \label{fig:autocomplete}
 \end{figure}
 
-The same autocomplete communication game is considered as in \citeA{autocomplete}. In this game, a human (called user) encodes a sentence into key words. 
-These key words are then decoded by a machine (called system) to retrieve the full, initial sentence. 
+The same autocomplete communication game is considered as in \citeA{autocomplete}. In this game, a human (called user) encodes a sentence into keywords. 
+These keywords are then decoded by a machine (called system) to retrieve the full, initial sentence. 
 A schematic overview is given in figure \ref{fig:autocomplete}. 
 The communication game is succesfull if the retrieved sentence is the same as the initial sentence. 
 
-More formally, a target sentence $x=(x_1, \dots, x_m)$ is communicated by a user through the key words $z=(z_1, \dots, z_n)$. 
+More formally, a target sentence $x=(x_1, \dots, x_m)$ is communicated by a user through the keywords $z=(z_1, \dots, z_n)$. 
 Note that $z$ is a subsequence of $x$. 
-The system then tries to retrieve the target sentence by decoding the key words. 
-The target sentence is described by the key words using encoding strategy $q_{\alpha}(z | x)$ and the system decodes the key words by using decoding strategy $p_{\beta}(x|z)$. 
+The system then tries to retrieve the target sentence by decoding the keywords. 
+The target sentence is described by the keywords using encoding strategy $q_{\alpha}(z | x)$ and the system decodes the keywords by using decoding strategy $p_{\beta}(x|z)$. 
 
-For a model to be efficient, the number of key words needs to be as low as possible. 
+For a model to be efficient, the number of keywords needs to be as low as possible. 
 In addition, for a model to be accurate, the probability of reconstructing $x$ from $z$ needs to be as high as possible. 
 Therefore, a cost and a loss, respectively, can be defined:
 \begin{equation}
@@ -187,7 +187,7 @@ How does the model work?
 
 Previous research did not take structure into account \cite{autocomplete, Bar-YossefZiv2011Cqa, SvyatkovskiyAlexey2019PACC}.
 Since language is structured, it makes sense to use a structured model as an autocomplete model. 
-In this research, we look at how we can use a latent segmentation model to retrieve key words from a sentence. 
+In this research, we look at how we can use a latent segmentation model to retrieve keywords from a sentence. 
 
 \chapter{Method}
 
