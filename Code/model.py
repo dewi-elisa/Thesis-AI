@@ -205,6 +205,8 @@ class Decoder(nn.Module):
             # print([self.id2word[word] for word in sentence])
             last_word = torch.tensor([last_word] * batch_size).to(self.device)
             p_words.append(p_word[last_word])
+            if torch.equal(last_word, torch.tensor(self.word2id["<eos>"])):
+                return sentence, p_words
 
         return sentence, p_words
 
