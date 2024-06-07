@@ -17,6 +17,12 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 
+\usepackage{caption}
+\usepackage{subcaption}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
 % [CHANGE] The title of your thesis. If your thesis has a subtitle, then this
 % should appear right below the main title, in a smaller font.
 \newcommand{\theTitle}{The first sentence \\
@@ -139,7 +145,7 @@ If we can give a machine a few keywords and let the machine generate a sentence 
 This is what autocomplete systems are trying to achieve. 
 \textcolor{orange}{The way in which we choose the keywords is also important. 
 Taking just the first or the last few words of a sentence as keywords usually does not capture the full meaning of the sentence.} 
-For example, if someone want to capture the meaning of 'I live in Amsterdam' in a few keywords, the words 'live Amsterdam' would probably be choosen. 
+For example, if someone want to capture the meaning of \textit{'I live in Amsterdam'} in a few keywords, the words \textit{'live Amsterdam'} would probably be choosen. 
 Thus, the keywords come from multiple places in the sentence. 
 Therefore, autocomplete systems need to use more complex models to be more efficient and accurate. 
 
@@ -176,7 +182,62 @@ Therefore, a cost and a loss, respectively, can be defined:
 \end{equation}
 
 \subsection{Segmentation model}
-Why does a segmentation model work?
+% Why does a segmentation model work?
+% TODO: better captions for images
+% TODO: add references
+% TODO: add Markov Models
+
+\subsubsection{General idea}
+\textcolor{orange}{With a segmentation model all possible segmentation can be made. 
+A segmentation model scores every possible segmentation.
+With these scores, the model can determine what the best possible segmentation is.}
+
+\subsubsection{Segmentation model for text}
+So how does the segmentation model work for text? 
+If we have a sentence, e.g. \textit{'I will be late'}, we can use fencepost indexing and represent the fenceposts as nodes in a directed acyclic graph (DAG). 
+We can then draw edges between those nodes that represent segments. 
+Those segments can be seen as (groups of) words. 
+In figure \ref{fig:dag}, a DAG can be seen in which all the possible segments are showed. 
+In the case of the autocomplete communication model described before, a segment is either kept or not.
+Therefore, we can have one edge representing 'keep' and one representing 'do not keep', resulting in figure \ref{fig:dag2}.
+If the pink edges are taken as 'do not keep' and the blue ones as 'keep', two possible segmentations can be seen in figure \ref{fig:segmentation} and \ref{fig:segmentation2}. 
+Both segmentations result in the keywords \textit{'will be late'}. 
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/segmentation1.jpeg}
+        \caption{Segments as a DAG}
+        \label{fig:dag}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/segmentation2.jpeg}
+        \caption{More segments as a DAG}
+        \label{fig:dag2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/segmentation3.jpeg}
+        \caption{Possible segmentation}
+        \label{fig:segmentation}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/segmentation4.jpeg}
+        \caption{Another possible segmentation}
+        \label{fig:segmentation2}
+    \end{subfigure}
+    \caption{Segmentation model.}
+    \label{fig:segmentation_model}
+\end{figure}
+
+All segments can be scored with the help of the Forward algorithm. 
+After scoring each segment, the model can then choose the segments with the highest scores to retrieve the best possible segmentation. 
 
 \subsection{Structured latent variables}
 How does the model work? 
@@ -188,6 +249,7 @@ How does the model work?
 Previous research did not take structure into account \cite{autocomplete, Bar-YossefZiv2011Cqa, SvyatkovskiyAlexey2019PACC}.
 Since language is structured, it makes sense to use a structured model as an autocomplete model. 
 In this research, we look at how we can use a latent segmentation model to retrieve keywords from a sentence. 
+The segmentation model will be implemented in the encoder of the encoder-decoder model in order to choose the best keywords from the sentence.
 
 \chapter{Method}
 
