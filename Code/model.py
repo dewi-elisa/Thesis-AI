@@ -78,7 +78,7 @@ class Encoder(nn.Module):
         log_prob_mask = torch.sum(mask * torch.log(prob_tokens)
                                   + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
 
-        return subsentence, log_prob_mask, mask
+        return subsentence, log_prob_mask
 
 
 class Decoder(nn.Module):
@@ -159,7 +159,7 @@ class Decoder(nn.Module):
         # print([self.id2word[word] for word in sentence])
 
         # Calculate the log probability for the sentence
-        log_prob_sentence = torch.sum(torch.log(torch.Tensor(p_words)))
+        log_prob_sentence = torch.sum(torch.log(torch.cat(p_words)))
 
         return sentence, log_prob_sentence
 
@@ -393,7 +393,7 @@ if __name__ == "__main__":
 
         src_seqs = src_seqs.to(device)
         trg_seqs = trg_seqs.to(device)
-        keywords, log_q_alpha, mask = encoder(src_seqs)
+        keywords, log_q_alpha = encoder(src_seqs)
         predicted, log_p_beta = decoder(keywords, trg_seqs)
 
         # print()

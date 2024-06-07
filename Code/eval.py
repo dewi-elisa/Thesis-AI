@@ -99,33 +99,24 @@ def eval_ae_batch(opt,
     decoder.eval()
     with torch.no_grad():
         # Encode
-        key_prob_over_tokens, key_mask = encoder(src_seqs)
-        key_seqs, key_lines = decoder.postprocess(key_seqs=None,
-                                                  key_mask=key_mask,
-                                                  encoded_lines=src_lines)
+        subsentence, log_prob_mask = encoder(src_seqs)
+        # key_seqs, key_lines = decoder.postprocess(key_seqs=None,
+        #                                           key_mask=key_mask,
+        #                                           encoded_lines=src_lines)
         # Decode
         (prob_over_dyn_vocab, attn_weight_over_key,
          dyn_word2id, dyn_id2word,
          gen_prob_per_timestep, predictions) = decoder.generate(key_seqs,
                                                                 key_lines)
-        reindexed_key_seqs = decoder.reindex(key_seqs,
-                                             key_lines,
-                                             dyn_word2id).to(device)
-        reindexed_trg_seqs = decoder.reindex(trg_seqs,
-                                             trg_lines,
-                                             dyn_word2id).to(device)
 
         # Result different between with and without beam search
         src = src_lines
         key = key_lines
-        if opt.beam_size > 1:
-            out_lines = [prediction[0][0] for prediction in predictions]
-        else:
-            output = prob_over_dyn_vocab
-            _, top = output.topk(1)         # [batch_size, max_seq_len, 1]
-            out_seqs = top.squeeze(2)       # [batch_size, max_seq_len]
-            out_lines = decoder.tokenizer.tensor_to_encoded_lines(
-                out_seqs, dyn_id2word)
+        output = prob_over_dyn_vocab
+        _, top = output.topk(1)         # [batch_size, max_seq_len, 1]
+        out_seqs = top.squeeze(2)       # [batch_size, max_seq_len]
+        out_lines = decoder.tokenizer.tensor_to_encoded_lines(
+            out_seqs, dyn_id2word)
         avg_recon_loss = get_recon_loss(prob_over_dyn_vocab,
                                         reindexed_trg_seqs,
                                         len(dyn_word2id),
@@ -135,10 +126,8 @@ def eval_ae_batch(opt,
         src_tokens = decoder.tokenizer.encoded_lines_to_tokens(src_lines)
         key_tokens = decoder.tokenizer.tensor_to_tokens(reindexed_key_seqs,
                                                         dyn_id2word)
-        if opt.beam_size > 1:
-            out_tokens = decoder.tokenizer.encoded_lines_to_tokens(out_lines)
-        else:
-            out_tokens = decoder.tokenizer.tensor_to_tokens(out_seqs,
+
+        out_tokens = decoder.tokenizer.tensor_to_tokens(out_seqs,
                                                             dyn_id2word)
         # Overwrite if pretty print
         if opt.pretty_print:
@@ -148,48 +137,6 @@ def eval_ae_batch(opt,
             out = decoder.tokenizer.tokens_to_lines(out_tokens)
         else:
             out = out_lines
-
-        if opt.debug:
-            cprint("\n\n[Debug] Evaluating on batch:", Fore.YELLOW)
-
-            dyn_vocab_index = dyn_id2word.keys() - decoder.id2word.keys()
-            dyn_vocab_index.add(decoder.word2id["<unk>"])  # Highlight <unk>
-            dyn_vocab_index = [" " + str(index) for index in dyn_vocab_index]
-            dyn_vocab_token = dyn_word2id.keys() - decoder.word2id.keys()
-            dyn_vocab_token.add("<unk>")  # Highlight <unk>
-
-            dyn_vocab_text = "\n".join([f"{dyn_word2id[token]}: {token}"
-                                        for token in dyn_vocab_token])
-            cprint(f"\nDynamic vocabulary\n{dyn_vocab_text}\n", Fore.RED)
-
-            key_seqs_text = f"key_seqs: {reindexed_key_seqs.numpy()} (reindexed)"  # noqa
-            if opt.beam_size == 1:
-                out_seqs_text = f"out_seqs: {out_seqs.numpy()} (reindexed)"
-            trg_seqs_text = f"trg_seqs: {reindexed_trg_seqs.numpy()} (reindexed)\n"  # noqa
-
-            cprint("Sequences:", Fore.YELLOW)
-            cprint(key_seqs_text, Fore.GREEN, dyn_vocab_index)
-            if opt.beam_size == 1:
-                cprint(out_seqs_text, Fore.CYAN, dyn_vocab_index)
-            cprint(trg_seqs_text, Fore.MAGENTA, dyn_vocab_index)
-
-            key_lines_text = "key_lines: " + "\n".join(key_lines)
-            out_lines_text = "out_lines: " + "\n".join(out_lines)
-            trg_lines_text = "trg_lines: " + "\n".join(src_lines)
-
-            cprint("Encoded lines:", Fore.YELLOW)
-            cprint(key_lines_text, Fore.GREEN, dyn_vocab_token)
-            cprint(out_lines_text, Fore.CYAN, dyn_vocab_token)
-            cprint(trg_lines_text, Fore.MAGENTA, dyn_vocab_token)
-
-            # print(Fore.YELLOW + "\nPretty printed lines:" + Style.RESET_ALL)
-            # src_text = "\n".join(src)
-            # key_text = "\n".join(key)
-            # out_text = "\n".join(out)
-            #
-            # cprint(src_text, Fore.WHITE, dyn_vocab_token)
-            # cprint(key_text, Fore.GREEN, dyn_vocab_token)
-            # cprint(out_text, Fore.CYAN, dyn_vocab_token)
 
         return (list(zip(src, key, out, src_tokens, key_tokens, out_tokens)),
                 avg_recon_loss,

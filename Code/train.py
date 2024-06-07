@@ -37,7 +37,7 @@ def train_batch(encoder, decoder, optimizer, batch):
     Encode and decode
     """
     # Encode
-    subsentence, log_prob_mask, mask = encoder(src_seqs)
+    subsentence, log_prob_mask = encoder(src_seqs)
 
     # Process keywords
     # key_seqs, key_lines = decoder.postprocess(key_seqs=None,
@@ -55,7 +55,7 @@ def train_batch(encoder, decoder, optimizer, batch):
 
     # NOTE we count whitespace here for accurate rewards here
     num_src_tokens = torch.sum(src_seqs.gt(0), dim=1).float()
-    num_key_tokens_from_encoder = torch.sum(mask.gt(0), dim=1).float()
+    num_key_tokens_from_encoder = float(subsentence.size(dim=0))
 
     kept_perc_per_sample = num_key_tokens_from_encoder / num_src_tokens
 
