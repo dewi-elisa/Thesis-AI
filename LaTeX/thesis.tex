@@ -287,11 +287,11 @@ Finally, the sequence of kept tokens and the log probability of the mask are ret
 
 \paragraph{Decoder.} 
 The decoder itself is also an encoder-decoder model (the encoder of this model is referred to as encoder*).
-In the encoder part, it first embeds the tokens of the subsequence.
+The encoder* first embeds the tokens of the subsequence.
 It then encodes the embedding using a bi-directional LSTM. 
 
-In the decoder part, the full sentence is decoded. 
-It therefore embeds the already decoded sequence (or just the <eos> symbol if there is none) into a 300-dimensional vector and concatenates the last hidden state of the encoder* to it. 
+The decoder decodes the full sentence. 
+It therefore embeds the already decoded sequence (or just the <sos> symbol if there is none) into a 300-dimensional vector and concatenates the last hidden state of the encoder* to it. 
 This embedding is the input for another uni-directional LSTM. 
 Finally, the probability of the next word is calculated using global attention and the full sentence and its log probability are returned. 
 % teacher forcing tijdens training, greedy tijdens test
