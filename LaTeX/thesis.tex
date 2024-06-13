@@ -295,6 +295,7 @@ It therefore embeds the already decoded sequence (or just the <sos> symbol if th
 This embedding is the input for another uni-directional LSTM. 
 Finally, the probability of the next word is calculated using global attention and the full sentence and its log probability are returned. 
 % teacher forcing tijdens training, greedy tijdens test
+% <sos> anders verwoorden
 
 \paragraph{Optimization.} 
 The goal of the model is to be so efficient and accurate as possible. 
