@@ -175,9 +175,11 @@ For a model to be efficient, the number of keywords needs to be as low as possib
 In addition, for a model to be accurate, the probability of reconstructing $x$ from $z$ needs to be as high as possible. 
 Therefore, a cost and a loss, respectively, can be defined:
 \begin{equation}
+    \label{eq:cost}
     \text{cost}(x,\alpha) = \mathbb{E}_{q_{\alpha}(z|x)} [\text{length}(z)]
 \end{equation}
 \begin{equation}
+    \label{eq:loss}
     \text{loss}(x,\alpha,\beta) = \mathbb{E}_{q_{\alpha}(z|x)} [-\log p_{\beta}(x|z)]
 \end{equation}
 
@@ -252,7 +254,73 @@ Since language is structured, it makes sense to use a structured model as an aut
 In this research, we look at how we can use a latent segmentation model to retrieve keywords from a sentence. 
 The segmentation model will be implemented in the encoder of the encoder-decoder model in order to choose the best keywords from the sentence.
 
-\chapter{Method}
+\chapter{Experiment 1 \\ Replication}
+In the first experiment the encoder-decoder model from \citeA{autocomplete} was replicated. 
+
+\section{Method}
+
+\subsection{Data}
+% What data? Data preprocessing? Data split?
+% TODO: They also say something about capitalisation -> do we do this too?
+% TODO: make a table with a few example sentences
+The same data was used as in \citeA{autocomplete}.
+The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \textcolor{orange}{(bron!)}.
+Another 10K sentences were used to test the model. 
+The sentences had at most 16 tokens. 
+The reviews were segmented into sentences following the same procedure as \textcolor{orange}{Guu et al}. 
+
+\subsection{Experimental Design}
+% What is the setup?
+% TODO: check if it is indeed y_k, maybe y_m?
+The model used is an encoder-decoder model.
+The encoder, using the encoding strategy $q_{\alpha}(z|x)$, takes as input a target sequence $x = (x_1, \dots, x_m)$ and outputs a sequence of keywords $z = (z_1, \dots, z_n)$.
+The decoder, using the decoding strategy $p_{\beta}(x|z)$, then takes these keywords as input and outputs a predicted sequence $y = (y_1, \dots, y_k)$. 
+The better the autoencoder works, the more likely it is that $x$ and $y$ are equal. 
+
+\subsection{Model description}
+% What does the model look like? Which equations are used? Diagrams/pseudocode?
+\paragraph{Encoder.} 
+The encoder embeds the tokens and uses a uni-directional LSTM to score the tokens.
+An additional linear layer followed by sigmoid function is used to determine the probability of keeping each token. 
+From these probabilities, a mask is sampled from a Bernoulli distribution. 
+Finally, the sequence of kept tokens and the log probability of the mask are returned.
+
+\paragraph{Decoder.} 
+The decoder itself is also an encoder-decoder model (the encoder of this model is referred to as encoder*).
+In the encoder part, it first embeds the tokens of the subsequence.
+It then encodes the embedding using a bi-directional LSTM. 
+
+In the decoder part, the full sentence is decoded. 
+It therefore embeds the already decoded sequence (or just the <eos> symbol if there is none) into a 300-dimensional vector and concatenates the last hidden state of the encoder* to it. 
+This embedding is the input for another uni-directional LSTM. 
+Finally, the probability of the next word is calculated using global attention and the full sentence and its log probability are returned. 
+% teacher forcing tijdens training, greedy tijdens test
+
+\paragraph{Optimization.} 
+The goal of the model is to be so efficient and accurate as possible. 
+If equation \ref{eq:cost} and \ref{eq:loss} are merged and a parameter $\lambda$ is added to represent the trade-off between the two, the goal becomes the following:
+\begin{equation}
+    \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \mathbb{E}[\text{loss}(x, \alpha, \beta)].
+\end{equation}
+
+\subsubsection{Hyperparameters}
+What are the hyperparameters?
+% learning rates
+% hidden dimension van LSTMs en embeddings is 300
+% Adam
+% During training: dropout
+% relu
+% implemented using PyTorch
+% log probability -> formal?
+
+\subsection{(Optimization)}
+What optimizations were done?
+
+\section{Results}
+
+\chapter{Experiment 2 \\ Segmentation Model}
+\section{Method}
+\section{Results}
 
 \chapter{Results}
 
