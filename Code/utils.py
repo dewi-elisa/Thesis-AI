@@ -68,37 +68,24 @@ def init_writer(opt, exp):
     return writer
 
 
-def save_model(opt, exp, encoder, decoder):
-    path_model = os.path.join(opt.root, opt.exp_dir, "model")
-    if not os.path.exists(path_model):
-        os.makedirs(path_model)
-
-    save_path = os.path.join(path_model, "{}.pt".format(exp))
-    save_dict = {"decoder": decoder.state_dict()}
-    if (not opt.uniform_encoder) and (not opt.stopword_encoder):
-        save_dict.update({"encoder": encoder.state_dict()})
-    torch.save(save_dict, save_path)
-    print("[Util] Saved model to {}.".format(save_path))
-
-
-def load_model(opt, encoder, decoder, lambdas=0, global_step=0):
-    path_model = os.path.join(opt.root, opt.exp_dir, "model")
-    path_load = os.path.join(path_model, "{}".format(opt.model_name))
-    if torch.cuda.is_available():
-        loaded = torch.load(path_load)
+def save_model(encoder, decoder, parameter, epoch, structured=False):
+    if structured == True:
+        structured = 'structured'
     else:
-        loaded = torch.load(path_load, map_location="cpu")
+        structured = 'unstructured'
+    name = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
 
-    decoder.load_state_dict(loaded.get("decoder"))
-    if opt.load_trained_encoder:
-        encoder.load_state_dict(loaded.get("encoder"))
-    if opt.load_trained_lambdas:
-        lambdas = loaded.get("lambdas")
-    if opt.start_global_step > 0:
-        global_step = opt.start_global_step
-        print("[Util] Training model from {} step.".format(global_step))
-    print("\n[Util] Loaded model from {}.".format(path_load))
-    return global_step
+    save_dict = {"decoder": decoder.state_dict()}
+    save_dict.update({"encoder": encoder.state_dict()})
+    torch.save(save_dict, "models/" + name)
+
+
+def load_model(name, encoder, decoder):
+    path = 'models/' + name
+    model = torch.load(path)
+
+    decoder.load_state_dict(model.get("decoder"))
+    encoder.load_state_dict(model.get("encoder"))
 
 
 def cprint(text, color, highlight=None):

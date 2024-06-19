@@ -1,15 +1,15 @@
-import re
+# import re
 import os
-import copy
-import math
-import pickle
-import datetime
-import itertools
-import collections
+# import copy
+# import math
+# import pickle
+# import datetime
+# import itertools
+# import collections
 import configargparse
 import numpy as np
-from tqdm import tqdm
-from colorama import Fore, Style
+# from tqdm import tqdm
+# from colorama import Fore, Style
 
 import torch
 
@@ -18,733 +18,198 @@ import utils
 import data
 import model
 import train
-from utils import cprint
-from result import Result
+# from utils import cprint
+# from result import Result
 
+import torch.optim as optim
 import matplotlib.pyplot as plt
+# from scipy.optimize import curve_fit
+# from scipy.interpolate import interp1d
+
+learning_rate = 0.001
 
 
-def evaluate(target, subsentence, predicted, parameter, log_p_beta):
-    efficiency = len(subsentence) / len(target)
-    loss = - log_p_beta
+def eval_batch(device, encoder, decoder, batch, parameter):
+    src_seqs, trg_seqs, src_lines, trg_lines = batch
+    src_seqs = src_seqs.to(device)
+    trg_seqs = trg_seqs.to(device)
 
-    accuracy = (target == predicted)
-    recon_loss = len(subsentence) + parameter * - log_p_beta
+    encoder.eval()
+    decoder.eval()
+    with torch.no_grad():
+        # Encode
+        subsentence, log_prob_mask = encoder(src_seqs)
+        subsentence_lines = [encoder.id2word[x.item()] for x in subsentence]
 
-    return efficiency, loss, accuracy, recon_loss
+        # Decode
+        sentence, log_prob_sentence = decoder(subsentence, trg_seqs, decode_function='teacher')
+        sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
+
+        # Calculate metrics
+        efficiency = len(subsentence) / len(src_seqs) * 100
+        loss = - log_prob_sentence
+        accuracy = (src_seqs == sentence)
+        recon_loss = len(subsentence) + parameter * - log_prob_sentence
+
+        return (list(zip(src_lines, subsentence_lines, sentence_lines,
+                         src_seqs, subsentence, sentence)),
+                efficiency, loss, accuracy, recon_loss)
 
 
-def print_examples(target, subsentence, predicted, parameter, log_p_beta):
-    efficiency, loss, accuracy, recon_loss = evaluate(target, subsentence, predicted, parameter, log_p_beta)
-    print(target)
-    print(subsentence)
-    print(predicted)
-    print()
-    print('efficiency: ' + str(efficiency))
-    print('loss: ' + str(loss))
-    print('accuracy: ' + str(accuracy))
-    print('recon_loss: ' + str(recon_loss))
-    print()
-    print()
-    print()
+def evaluate(opt, device, encoder, decoder, loader, parameter):
+    results_all = []
+    efficiency_all = []
+    loss_all = []
+    accuracy_all = []
+    recon_loss_all = []
+
+    for batch_index, batch in enumerate(loader):
+        with torch.no_grad():
+            results, efficiency, loss, accuracy, recon_loss = eval_batch(device,
+                                                                         encoder, decoder,
+                                                                         batch, parameter)
+        results_all.extend(results)
+        efficiency_all.append(efficiency)
+        loss_all.append(loss)
+        accuracy_all.append(accuracy)
+        recon_loss_all.append(recon_loss)
+
+        if len(results_all) >= opt.max_eval_num:
+            break
+
+    avg_efficiency = np.mean(efficiency_all)
+    avg_loss = np.mean(loss_all)
+    accuracy_all = np.sum(accuracy) / len(loss_all)
+    avg_recon_loss = np.mean(recon_loss_all)
+
+    return results_all, avg_efficiency, avg_loss, accuracy_all, avg_recon_loss
 
 
-def get_figure_data(data):
-    efficiencies_all = []
-    accuracies_all = []
+def get_figure_data(opt, device, encoder, decoder, optimizer, loaders):
+    (train_ae_loader, train_key_loader,
+     val_ae_loader, val_key_loader,
+     test_ae_loader, test_key_loader) = loaders
+
+    efficiencies = []
+    accuracies = []
+
     parameters = [4, 4.2, 4.4, 4.6, 4.8, 5.0]
+    epoch = 2
+    structured = 'unstructured'
     for parameter in parameters:
-        # load model if available, otherwise train + save model
+        model = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
 
-        efficiencies = []
-        accuracies = []
-        for sentence in data:
-            efficiency, _, accuracy, _ = evaluate(target, subsentence, predicted, parameter, log_p_beta)
+        # If model is available, get data
+        if os.path.exists('models/' + model):
+            print()
+            print('Loading model ' + model + '...')
+            utils.load_model(model, encoder, decoder)
 
+            print('Evaluating the model...')
+            encoder.eval()
+            decoder.eval()
+            # There is no test set, so val for now...
+            _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
+                                                     val_ae_loader, parameter)
+            efficiencies.append(efficiency)
+            accuracies.append(accuracy)
+        else:
+            print()
+            print(model + ' not available!')
+            encoder = model.Encoder(opt, word2id, id2word, device)
+            decoder = model.Decoder(opt, word2id, id2word, device)
+            optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
+
+            print('Training it now...')
+            train.train(opt, device, encoder, decoder, optimizer, loaders)
+
+            print('Saving it...')
+            utils.save_model(encoder, decoder, parameter, epoch)
+
+            print('Evaluating the model...')
+            encoder.eval()
+            decoder.eval()
+            # There is no test set, so val for now...
+            _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
+                                                     val_ae_loader, parameter)
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
 
-        efficiencies_all.append(efficiencies)
-        accuracies_all.append(accuracies)
 
-    return np.array(efficiencies_all)/len(efficiencies), np.array(accuracies_all)/len(accuracies), parameters
+    return efficiencies, accuracies, parameters
+
+
+def func(x):
+    return 1 / (1 + np.exp(-x))
+
+
+def sigmoid(x, L, x0, k, b):
+    y = L / (1 + np.exp(-k*(x-x0))) + b
+    return (y)
 
 
 if __name__ == "__main__":
-    # TODO: is not yet right
-    efficiency, accuracy, parameters = get_figure_data(data)
+    parser = configargparse.ArgumentParser(description="train.py")
+
+    opts.basic_opts(parser)
+    opts.train_opts(parser)
+    opts.model_opts(parser)
+    opts.eval_opts(parser)
+
+    opt = parser.parse_args()
+    exp = utils.name_exp(opt)
+    device = utils.init_device()
+    parser = configargparse.ArgumentParser(description="train.py")
+
+    utils.init_seed(opt.seed)
+
+    # Tokenizer
+    tokenizer = data.build_tokenizer(opt)
+
+    # Vocabulary
+    word2id, id2word = data.build_vocab(opt, exp, tokenizer)
+
+    # Data Loaders
+    loaders = data.build_loaders(opt, tokenizer, word2id)
+
+    # Model
+    encoder = model.Encoder(opt, word2id, id2word, device)
+    decoder = model.Decoder(opt, word2id, id2word, device)
+
+    # Optimizer
+    optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
+
+    efficiency, accuracy, parameters = get_figure_data(opt, device,
+                                                       encoder, decoder,
+                                                       optimizer, loaders)
+
+    # parameters = [4, 4.2, 4.4, 4.6, 4.8, 5.0]
+    # efficiency = [15, 20, 30, 40, 45, 65]
+    # accuracy = [0, 3, 10, 15, 18, 40]
 
     plt.figure()
+    print(efficiency)
+    print(accuracy)
+    plt.plot(efficiency, accuracy, marker='o')
 
-    for i in range(len(parameters)):
-        plt.plot(efficiency[i], accuracy[i], label=parameters[i])
+    # # fit the data to a curve
+    # optimizedParameters, pcov = curve_fit(func, efficiency, accuracy)
+    # print(optimizedParameters)
+    # # Use the optimized parameters to plot the best fit
+    # plt.plot(efficiency, func(*optimizedParameters), label="fit")
+
+    # f = interp1d(efficiency, accuracy)
+    # plt.plot(efficiency, f(efficiency))
+
+    # p0 = [max(accuracy), np.median(efficiency), 1, min(accuracy)]  # mandatory initial guess
+    # popt, pcov = curve_fit(sigmoid, efficiency, accuracy, p0)  # , method='dogbox')
+    # plt.plot(efficiency, sigmoid(*popt), label="fit")
+
+    for i, parameter in enumerate(parameters):
+        text = '$\lambda$ = ' + str(parameter)
+        plt.text(efficiency[i]+1, accuracy[i]-.5, text)
 
     plt.xlabel('Kept (%)')
     plt.ylabel('Greedy accuracy (%)')
-    plt.legend(title='Model')
+    # plt.legend(title='Model')
     plt.savefig('parameters.png')
-
-
-# def get_recon_loss(prob_over_dyn_vocab,
-#                    reindexed_trg_seqs,
-#                    len_dyn_word2id,
-#                    device):
-#     batch_size = reindexed_trg_seqs.size(0)
-#     num_trg_tokens = torch.sum(reindexed_trg_seqs.gt(0), dim=1).float()
-
-#     recon_loss_per_token = train.ce_loss_per_token(prob_over_dyn_vocab,
-#                                                    reindexed_trg_seqs,
-#                                                    len_dyn_word2id,
-#                                                    device)
-#     recon_loss_per_sample = torch.sum(
-#         recon_loss_per_token.view(batch_size, -1), dim=1)\
-#         .div(num_trg_tokens)
-
-#     avg_recon_loss = recon_loss_per_sample.sum().div(batch_size)
-#     return avg_recon_loss.item()
-
-
-# def score_similarity(src_tokens, out_tokens):
-#     # For now, assume each token is unique
-#     set_src_tokens = set(src_tokens)
-#     set_out_tokens = set(out_tokens)
-
-#     # Calculate jaccard similarity
-#     intersection = len(list(set_src_tokens.intersection(set_out_tokens)))
-#     union = (len(set_src_tokens) + len(set_out_tokens)) - intersection
-#     return float(intersection / union)
-
-
-# def eval_ae_batch(opt,
-#                   device,
-#                   encoder,
-#                   decoder,
-#                   batch):
-#     src_seqs, trg_seqs, src_lines, trg_lines = batch
-#     src_seqs = src_seqs.to(device)
-#     trg_seqs = trg_seqs.to(device)
-
-#     encoder.eval()
-#     decoder.eval()
-#     with torch.no_grad():
-#         # Encode
-#         subsentence, log_prob_mask = encoder(src_seqs)
-#         # key_seqs, key_lines = decoder.postprocess(key_seqs=None,
-#         #                                           key_mask=key_mask,
-#         #                                           encoded_lines=src_lines)
-#         # Decode
-#         (prob_over_dyn_vocab, attn_weight_over_key,
-#          dyn_word2id, dyn_id2word,
-#          gen_prob_per_timestep, predictions) = decoder.generate(key_seqs,
-#                                                                 key_lines)
-
-#         # Result different between with and without beam search
-#         src = src_lines
-#         key = key_lines
-#         output = prob_over_dyn_vocab
-#         _, top = output.topk(1)         # [batch_size, max_seq_len, 1]
-#         out_seqs = top.squeeze(2)       # [batch_size, max_seq_len]
-#         out_lines = decoder.tokenizer.tensor_to_encoded_lines(
-#             out_seqs, dyn_id2word)
-#         avg_recon_loss = get_recon_loss(prob_over_dyn_vocab,
-#                                         reindexed_trg_seqs,
-#                                         len(dyn_word2id),
-#                                         device)
-#         mrr = get_mrr(src_lines, predictions, opt.beam_size)
-
-#         src_tokens = decoder.tokenizer.encoded_lines_to_tokens(src_lines)
-#         key_tokens = decoder.tokenizer.tensor_to_tokens(reindexed_key_seqs,
-#                                                         dyn_id2word)
-
-#         out_tokens = decoder.tokenizer.tensor_to_tokens(out_seqs,
-#                                                             dyn_id2word)
-#         # Overwrite if pretty print
-#         if opt.pretty_print:
-#             src = decoder.tokenizer.tokens_to_lines(src_tokens)
-#             space = True if opt.print_space_between_key_tokens else False
-#             key = decoder.tokenizer.tokens_to_lines(key_tokens, space=space)
-#             out = decoder.tokenizer.tokens_to_lines(out_tokens)
-#         else:
-#             out = out_lines
-
-#         return (list(zip(src, key, out, src_tokens, key_tokens, out_tokens)),
-#                 avg_recon_loss,
-#                 mrr,
-#                 predictions)
-
-
-# def eval_key_batch(opt,
-#                    device,
-#                    encoder,
-#                    decoder,
-#                    batch):
-#     decoder.eval()
-#     with torch.no_grad():
-#         key_seqs_, trg_seqs, key_lines_, trg_lines = batch
-#         key_seqs, key_lines = decoder.postprocess(key_seqs=key_seqs_,
-#                                                   key_mask=None,
-#                                                   encoded_lines=key_lines_)
-#         key_seqs = key_seqs.to(device)
-#         trg_seqs = trg_seqs.to(device)
-
-#         # Decode
-#         (prob_over_dyn_vocab, attn_weight_over_key,
-#          dyn_word2id, dyn_id2word,
-#          gen_prob_per_timestep, predictions) = decoder.generate(key_seqs,
-#                                                                 key_lines)
-
-#         reindexed_key_seqs = decoder.reindex(key_seqs,
-#                                              key_lines,
-#                                              dyn_word2id).to(device)
-#         reindexed_trg_seqs = decoder.reindex(trg_seqs,
-#                                              trg_lines,
-#                                              dyn_word2id).to(device)
-
-#         # Result different between with and without beam search
-#         key = key_lines
-#         trg = trg_lines
-#         if opt.beam_size > 1:
-#             out = [prediction[0][0] for prediction in predictions]
-#         else:
-#             output = prob_over_dyn_vocab
-#             _, top = output.topk(1)         # [batch_size, max_seq_len, 1]
-#             out_seqs = top.squeeze(2)       # [batch_size, max_seq_len]
-#             out = decoder.tokenizer.tensor_to_encoded_lines(
-#                 out_seqs, dyn_id2word)
-#         avg_recon_loss = get_recon_loss(prob_over_dyn_vocab,
-#                                         reindexed_trg_seqs,
-#                                         len(dyn_word2id),
-#                                         device)
-#         mrr = get_mrr(trg_lines, predictions, opt.beam_size)
-
-#         key_tokens = decoder.tokenizer.tensor_to_tokens(reindexed_key_seqs,
-#                                                         dyn_id2word)
-#         trg_tokens = decoder.tokenizer.encoded_lines_to_tokens(trg_lines)
-#         if opt.beam_size > 1:
-#             out_tokens = decoder.tokenizer.encoded_lines_to_tokens(out)
-#         else:
-#             out_tokens = decoder.tokenizer.tensor_to_tokens(out_seqs,
-#                                                             dyn_id2word)
-
-#         # Overwrite if pretty print
-#         if opt.pretty_print:
-#             space = True if opt.print_space_between_key_tokens else False
-#             key = decoder.tokenizer.tokens_to_lines(key_tokens, space)
-#             trg = decoder.tokenizer.tokens_to_lines(trg_tokens)
-#             out = decoder.tokenizer.tokens_to_lines(out_tokens)
-#         return (list(zip(key, trg, out, key_tokens, trg_tokens, out_tokens)),
-#                 avg_recon_loss,
-#                 mrr,
-#                 predictions)
-
-
-# def eval_all_batch(opt,
-#                    device,
-#                    encoder,
-#                    decoder,
-#                    loader,
-#                    autoencoder):
-#     results_all = []
-#     recon_loss = []
-#     mrr_all = []
-#     predictions_all = []
-#     for batch_index, batch in enumerate(loader):
-#         if autoencoder:
-#             results, loss, mrr, predictions = eval_ae_batch(
-#                 opt, device, encoder, decoder, batch)
-#         else:
-#             results, loss, mrr, predictions = eval_key_batch(
-#                 opt, device, encoder, decoder, batch)
-#         results_all.extend(results)
-#         recon_loss.append(loss)
-#         mrr_all.append(mrr)
-#         if predictions:
-#             predictions_all.extend(predictions)
-#         if len(results_all) >= opt.max_eval_num:
-#             break
-
-#     avg_recon_loss = np.mean(recon_loss)
-#     avg_mrr = np.sum(mrr_all) / len(results_all)  # CHECK Normalize
-#     return results_all, avg_recon_loss, avg_mrr, predictions_all
-
-
-# def eval_one_key(opt,
-#                  device,
-#                  encoder,
-#                  decoder,
-#                  key_seq,
-#                  key_line,
-#                  verbose=True):
-#     preds_lines = []
-#     preds_tokens = []
-
-#     decoder.eval()
-#     with torch.no_grad():
-#         key_seq, key_line = decoder.postprocess(key_seqs=key_seq,
-#                                                 key_mask=None,
-#                                                 encoded_lines=key_line)
-#         if verbose:
-#             print(f'KEY: {key_line}')
-#         # Decode
-#         (prob_over_dyn_vocab, attn_weight_over_key,
-#          dyn_word2id, dyn_id2word,
-#          gen_prob_per_timestep, predictions) = decoder.generate(key_seq,
-#                                                                 key_line)
-#         if opt.beam_size > 1:
-#             for i, (pred, score) in enumerate(predictions[0], 1):
-#                 out_tokens = decoder.tokenizer.encoded_line_to_tokens(pred)
-#                 out = decoder.tokenizer.tokens_to_line(out_tokens)  # Raw line
-#                 prob = round(math.exp(score) * 100, 2)
-#                 preds_lines.append(out.replace("<eos>", ""))
-#                 preds_tokens.append(out_tokens)
-#                 if verbose:
-#                     print(f'OUT{i}: {out.replace("<eos>", ""):50} {prob}%')
-#         else:
-#             output = prob_over_dyn_vocab
-#             _, top = output.topk(1)
-#             out_seq = top.squeeze(2)
-#             out = decoder.tokenizer.tensor_to_lines(out_seq, dyn_id2word)[0]
-#             if verbose:
-#                 print(f'OUT: {out.replace("<eos>", "")}')
-
-#     return preds_lines, preds_tokens
-
-
-# def eval_one_src(opt,
-#                  device,
-#                  encoder,
-#                  decoder,
-#                  src_seq,
-#                  src_line,
-#                  verbose=True):
-#     encoder.eval()
-#     decoder.eval()
-#     preds = []
-#     with torch.no_grad():
-#         # Encode
-#         key_prob_over_tokens, key_mask = encoder(src_seq.to(device))
-#         src_tokens = decoder.tokenizer.encoded_line_to_tokens(src_line[0])
-#         if True:
-#             for i in range(src_seq.size(1)):
-#                 token = src_tokens[i]
-#                 prob = round(key_prob_over_tokens[0][i].item() * 100, 2)
-#                 prob_bar = "▇▇" * int(prob / 10)
-#                 print(f'     {token:10} {prob_bar:20}| {prob}%')
-
-#         key_seq, key_line = decoder.postprocess(key_seqs=None,
-#                                                 key_mask=key_mask,
-#                                                 encoded_lines=src_line)
-
-#         # Decode
-#         (prob_over_dyn_vocab, attn_weight_over_key,
-#          dyn_word2id, dyn_id2word,
-#          gen_prob_per_timestep, predictions) = decoder.generate(key_seq,
-#                                                                 key_line)
-#         key_tokens = decoder.tokenizer.encoded_line_to_tokens(key_line[0])
-#         key_line = decoder.tokenizer.tokens_to_line(key_tokens, space=True)
-#         if verbose:
-#             print(Fore.YELLOW + f'KEY: {key_line.replace("<eos>", "")}'
-#                   + Style.RESET_ALL)
-
-#         if opt.beam_size > 1:
-#             for i, (pred, score) in enumerate(predictions[0], 1):
-#                 out_tokens = decoder.tokenizer.encoded_line_to_tokens(pred)
-#                 out = decoder.tokenizer.tokens_to_line(out_tokens)
-#                 prob = round(math.exp(score) * 100, 2)
-#                 if verbose:
-#                     print(f'OUT{i}: {out.replace("<eos>", ""):50} {prob}%')
-#                 preds.append(out.replace("<eos>", ""))
-#         else:
-#             output = prob_over_dyn_vocab
-#             _, top = output.topk(1)
-#             out_seq = top.squeeze(2)
-#             out = decoder.tokenizer.tensor_to_line(out_seq, dyn_id2word)
-#             if verbose:
-#                 print(f'OUT: {out.replace("<eos>", "")}')
-#         return key_seq, key_line, key_tokens, preds
-
-
-# def evaluate(opt,
-#              exp,
-#              device,
-#              encoder,
-#              decoder,
-#              data_type,
-#              ae_loader,
-#              key_loader,
-#              pbar,
-#              log=False,
-#              print_only=["train"]):
-#     if ae_loader:
-#         (ae_results, ae_recon_loss, ae_mrr,
-#          ae_predictions) = eval_all_batch(opt,
-#                                           device,
-#                                           encoder,
-#                                           decoder,
-#                                           ae_loader,
-#                                           autoencoder=True)
-#         # Exact match score
-#         autoencoder_acc = len([src for src, key, out, _, _, _ in ae_results
-#                                if src == out]) / float(len(ae_results))
-
-#         # BLEU score
-#         _, _, _, src_tokens, key_tokens, out_tokens = zip(*ae_results)
-#         autoencoder_bleu = get_bleu(src_tokens, out_tokens)
-
-#     if key_loader:
-#         (key_results, key_recon_loss, key_mrr,
-#          key_predictions) = eval_all_batch(opt,
-#                                            device,
-#                                            encoder,
-#                                            decoder,
-#                                            key_loader,
-#                                            autoencoder=False)
-#         keyword_acc = len([key for key, trg, out, _, _, _ in key_results
-#                            if trg == out]) / float(len(key_results))
-
-#         _, _, _, key_tokens, trg_tokens, out_tokens = zip(*key_results)
-#         keyword_bleu = get_bleu(trg_tokens, out_tokens)
-
-
-# def evaluate_dataset(opt,
-#                      device,
-#                      exp,
-#                      tokenizer,
-#                      full_lines,
-#                      word2id,
-#                      id2word,
-#                      decoder,
-#                      encoder,
-#                      lambdas):
-#     # Build data loader
-#     num_test_examples = opt.num_examples
-#     ae_loader = data.get_loader(src_lines=full_lines,
-#                                 trg_lines=full_lines,
-#                                 word2id=word2id,
-#                                 num_examples=num_test_examples,
-#                                 max_seq_len=opt.max_seq_len,
-#                                 keep_rate=1,
-#                                 processed_src=True,
-#                                 tokenizer=tokenizer,
-#                                 batch_size=opt.batch_size,
-#                                 shuffle=False,
-#                                 drop_last=False)
-
-#     # Decode data
-#     (ae_results, ae_recon_loss, ae_mrr,
-#      ae_predictions) = eval_all_batch(opt,
-#                                       device,
-#                                       encoder,
-#                                       decoder,
-#                                       ae_loader,
-#                                       autoencoder=True)
-
-#     # Process results
-#     result = Result(opt, exp, tokenizer, ae_results, ae_predictions)
-#     result.nll = round(ae_recon_loss, 2)
-#     result.generate_text_output()  # With default options
-#     return result
-
-
-# def load_uniform_model_for_external_usage(opt, device):
-#     modified_opt = opt
-#     modified_opt.uniform_encoder = True
-#     modified_opt.uniform_keep_rate = 0  # Doesn't matter for decoder
-#     modified_opt.load_trained_encoder = False
-#     existing_exp = re.match("(.*)_\d+?.pt", opt.uniform_model_name).group(1)
-
-#     # Tokenizer
-#     tokenizer = data.build_tokenizer(opt)
-
-#     # Vocabulary
-#     word2id, id2word = data.build_vocab(opt,
-#                                         existing_exp,
-#                                         tokenizer,
-#                                         use_existing=True)
-
-#     # Model
-#     uniform_decoder, uniform_encoder, lambdas = model.build_model(modified_opt,
-#                                                                   tokenizer,
-#                                                                   word2id,
-#                                                                   id2word,
-#                                                                   device)
-#     utils.load_model(modified_opt, uniform_encoder, uniform_decoder, lambdas)
-#     model_info = {'tokenizer': tokenizer,
-#                   'word2id': word2id,
-#                   'encoder': uniform_encoder,
-#                   'decoder': uniform_decoder}
-
-#     return model_info
-
-
-# def load_default_model_for_external_usage(opt, device):
-#     existing_exp = re.match("(.*)_\d+?.pt", opt.model_name).group(1)
-
-#     # Tokenizer
-#     tokenizer = data.build_tokenizer(opt)
-
-#     # Vocabulary
-#     word2id, id2word = data.build_vocab(opt,
-#                                         existing_exp,
-#                                         tokenizer,
-#                                         use_existing=True)
-
-#     # Model
-#     trained_decoder, trained_encoder, lambdas = model.build_model(opt,
-#                                                                   tokenizer,
-#                                                                   word2id,
-#                                                                   id2word,
-#                                                                   device)
-#     utils.load_model(opt, trained_encoder, trained_decoder, lambdas)
-#     model_info = {'tokenizer': tokenizer,
-#                   'word2id': word2id,
-#                   'encoder': trained_encoder,
-#                   'decoder': trained_decoder}
-
-#     return model_info
-
-
-# def infer_default_model_for_external_usage(opt,
-#                                            device,
-#                                            model_info,
-#                                            key_tokens):
-#     tokenizer = model_info['tokenizer']
-#     word2id = model_info['word2id']
-#     encoder = model_info['encoder']
-#     decoder = model_info['decoder']
-
-#     if key_tokens == ['']:
-#         key_tokens = ["<eos>"]
-#     else:
-#         key_tokens += ["<eos>"]
-
-#     key_tokens = [token.lower() for token in key_tokens if token != "#"]
-#     key_seq = tokenizer.tokens_to_tensor(key_tokens, word2id).long().view(1, -1)  # noqa
-#     key_line = [tokenizer.tokens_to_encoded_line(key_tokens)]
-#     preds_lines, preds_tokens = eval_one_key(opt,
-#                                              device,
-#                                              encoder=encoder,
-#                                              decoder=decoder,
-#                                              key_seq=key_seq,
-#                                              key_line=key_line,
-#                                              verbose=True)
-#     return preds_lines
-
-
-# def main(opt, device):
-#     existing_exp = re.match("(.*)_\d+?.pt", opt.model_name).group(1)
-
-#     # Tokenizer
-#     tokenizer = data.build_tokenizer(opt)
-
-#     # Vocabulary
-#     word2id, id2word = data.build_vocab(opt,
-#                                         existing_exp,
-#                                         tokenizer,
-#                                         use_existing=True)
-
-#     # Model
-#     trained_decoder, trained_encoder, lambdas = model.build_model(opt,
-#                                                                   tokenizer,
-#                                                                   word2id,
-#                                                                   id2word,
-#                                                                   device)
-#     utils.load_model(opt, trained_encoder, trained_decoder, lambdas)
-
-#     # Evaluate
-#     if opt.cross_eval_models:  # multiple encoders x multiple decoders
-#         # Load data
-#         if opt.path_test_data:
-#             path_test_data = opt.path_test_data
-#         else:  # If not specified, use last n (unused) sentences from data
-#             filename = "train_lines.txt"
-#             path_test_data = os.path.join(opt.root, opt.data_dir, filename)
-#         full_lines = data.load_data(path_test_data,
-#                                     check_validity=True,
-#                                     reverse=opt.reverse)  # Lines not in train set
-
-#         def parse_model_info(opt):
-#             # NOTE uniform encoder must include "uni" or "Uni" and "Kr" in model_name
-#             """
-#             Examples
-#             {
-#                 "Uni-Kr0.1": "UNI_CD_S3_word_uniform_D500000_E300_Ld0.001_uniformE_Kr0.1_100000.pt",
-#                 "Uni-Kr0.3": "UNI_CD_S3_word_uniform_D500000_E300_Ld0.001_uniformE_Kr0.3_100000.pt",
-#                 "Uni-Kr0.5": "UNI_CD_S3_word_uniform_D500000_E300_Ld0.001_uniformE_Kr0.5_100000.pt",
-#                 "Uni-Kr0.7": "UNI_CD_S3_word_uniform_D500000_E300_Ld0.001_uniformE_Kr0.7_100000.pt",
-#                 "Uni-Kr0.9": "UNI_CD_S3_word_uniform_D500000_E300_Ld0.001_uniformE_Kr0.9_100000.pt",
-
-#                 "Stop-Dr0.5": "STOPWORD_CD_S3_word_stopwordE_Dr0.5_D500000_E300_Ld0.001_trainedE_Le0.001_50000.pt",
-#                 "Stop-Dr1.0": "STOPWORD_CD_S3_word_stopwordE_Dr1.0_D500000_E300_Ld0.001_trainedE_Le0.001_50000.pt",
-
-#                 "Trained-Eps0.05": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.05_250000.pt",
-#                 "Trained-Eps0.1": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.1_250000.pt",
-#                 "Trained-Eps0.15": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.15_250000.pt",
-#                 "Trained-Eps0.2": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.2_250000.pt",
-#                 "Trained-Eps0.4": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.4_250000.pt",
-#                 "Trained-Eps0.6": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.6_250000.pt",
-#                 "Trained-Eps0.8": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps0.8_250000.pt",
-#                 "Trained-Eps1.0": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps1.0_250000.pt",
-#                 "Trained-Eps1.2": "REMOVE_CD_S3_word_scratch_initL5.0_D500000_E300_Ld0.001_trainedE_Le0.001_lagr_Ll0.01_Eps1.2_250000.pt",
-#             }
-#             """
-#             with open(opt.path_cross_eval_models, "rb") as fb:
-#                 cross_eval_models = pickle.load(fb)
-
-#             return cross_eval_models
-
-
-#         only_these_encoders = []
-#         only_these_decoders = []
-
-#         model_info = parse_model_info(opt)
-#         encoders, decoders = model.build_models(opt,
-#                                                 tokenizer,
-#                                                 word2id,
-#                                                 id2word,
-#                                                 device,
-#                                                 model_info)
-
-#         # Create directory to save results
-#         path_results = os.path.join(opt.root, opt.exp_dir, "results")
-#         timestemp = datetime.datetime.now().strftime("%m%d")
-#         results_dir = os.path.join(path_results, timestemp, "cross")
-#         if not os.path.exists(results_dir):
-#             os.makedirs(results_dir)
-
-#         # Print all evaluations to run
-#         print("[Eval] Evaluations to run:")
-#         print(f"{'Encoder':20}{'Decoder':20}")
-#         for decoder_name, decoder in decoders.items():
-#             if only_these_decoders and (decoder_name not in only_these_decoders):  # noqa
-#                 continue
-#             for encoder_name, encoder in encoders.items():
-#                 if only_these_encoders and (encoder_name not in only_these_encoders):  # noqa
-#                     continue
-#                 eval_name = utils.name_eval(opt, encoder_name, decoder_name)
-#                 path_result_p = os.path.join(results_dir, f"{eval_name}.p")
-#                 if not os.path.exists(path_result_p):
-#                     print(f"{encoder_name:20}{decoder_name:20}")
-
-#         print("\n[Eval] Start cross-evaluation")
-#         for decoder_name, decoder in decoders.items():
-#             if only_these_decoders and (decoder_name not in only_these_decoders):  # noqa
-#                 continue
-#             for encoder_name, encoder in encoders.items():
-#                 if only_these_encoders and (encoder_name not in only_these_encoders):  # noqa
-#                     continue
-#                 eval_name = utils.name_eval(opt, encoder_name, decoder_name)
-#                 path_result_txt = os.path.join(results_dir, f"{eval_name}.txt")
-#                 path_result_p = os.path.join(results_dir, f"{eval_name}.p")
-#                 if (os.path.exists(path_result_txt)
-#                         and os.path.exists(path_result_p)):
-#                     print(f"[Eval] Found results for {encoder_name}E and {decoder_name}D.")  # noqa
-#                     continue
-
-#                 print(f"[Eval] Evaluating with {encoder_name}E and {decoder_name}D.")  # noqa
-#                 result = evaluate_dataset(opt,
-#                                           device,
-#                                           existing_exp,
-#                                           tokenizer,
-#                                           full_lines,
-#                                           word2id,
-#                                           id2word,
-#                                           decoder,
-#                                           encoder,
-#                                           lambdas)
-
-#                 # Save results
-#                 with open(path_result_txt, "w") as f:
-#                     f.write(result.text_output)
-#                 with open(path_result_p, "wb") as f:
-#                     pickle.dump(result, f)
-#                 print(f"[Eval] Saved results at {path_result_txt}.")
-
-#         print(f"[Eval] Results are saved at {results_dir}")
-
-#     else:  # multiple encoders x single decoder
-#         # Load data
-#         if opt.path_test_data:
-#             path_test_data = opt.path_test_data
-#         else:
-#             filename = "train_lines.txt"
-#             path_test_data = os.path.join(opt.root, opt.data_dir, filename)
-#         full_lines = data.load_data(path_test_data,
-#                                     check_validity=True,
-#                                     reverse=opt.reverse)
-
-#         # Build uniform encoders
-#         encoders = dict()
-#         if opt.use_baseline_encoders:
-#             encoders.update(model.build_baseline_encoders(opt,
-#                                                           tokenizer,
-#                                                           word2id,
-#                                                           id2word,
-#                                                           device))
-#         encoders["trained"] = trained_encoder
-
-#         # Create directory to save results
-#         path_results = os.path.join(opt.root, opt.exp_dir, "results")
-#         timestemp = datetime.datetime.now().strftime("%m%d")
-#         results_dir = os.path.join(path_results, timestemp, opt.model_name)
-#         if not os.path.exists(results_dir):
-#             os.makedirs(results_dir)
-
-#         for encoder_name, encoder in encoders.items():
-#             print(f"[Eval] Evaluating with {encoder_name} encoder.")
-#             eval_name = utils.name_eval(opt, encoder_name)
-#             result = evaluate_dataset(opt,
-#                                       device,
-#                                       existing_exp,
-#                                       tokenizer,
-#                                       full_lines,
-#                                       word2id,
-#                                       id2word,
-#                                       trained_decoder,
-#                                       encoder,
-#                                       lambdas)
-
-#             # Save results
-#             path_txt_results = os.path.join(results_dir, f"{eval_name}.txt")
-#             path_p_results = os.path.join(results_dir, f"{eval_name}.p")
-#             with open(path_txt_results, "w") as f:
-#                 f.write(result.text_output)
-#             with open(path_p_results, "wb") as f:
-#                 pickle.dump(result, f)
-#             print(f"[Eval] Saved results as {path_p_results}")
-
-#         print(f"[Eval] Results are saved at {results_dir}\n")
-
-
-# if __name__ == "__main__":
-#     parser = configargparse.ArgumentParser(description="eval.py")
-
-#     opts.basic_opts(parser)  # Make sure options match with pretrained models
-#     opts.train_opts(parser)
-#     opts.model_opts(parser)
-#     opts.eval_opts(parser)
-
-#     opt = parser.parse_args()
-#     device = utils.init_device()
-
-#     if opt.path_models:  # Evaluate multiple models
-#         failed = []
-#         with open(opt.path_models, "r") as f:
-#             model_names = list(filter(None, f.read().split("\n")))
-#         for model_name in model_names:
-#             # try:
-#             if "uniformE" in model_name:
-#                 opt.load_trained_encoder = False
-#                 opt.uniform_encoder = True
-#                 opt.uniform_keep_rate = float(re.findall(
-#                     "uniformE_Kr(.*?)_", model_name)[0])
-#             elif "stopwordE" in model_name:
-#                 opt.load_trained_encoder = False
-#                 opt.stopword_encoder = True
-#                 opt.stopword_drop_rate = float(re.findall(
-#                     "stopwordE_Dr(.*?)_", model_name)[0])
-
-#             opt.model_name = model_name
-#             main(opt, device)
-#     else:
-#         main(opt, device)

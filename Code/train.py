@@ -23,7 +23,7 @@ def calculate_loss(subsentence, log_q_alpha, log_p_beta):
     return log_q_alpha * f.detach() + f, f.detach()
 
 
-def train_batch(encoder, decoder, optimizer, batch):
+def train_batch(device, encoder, decoder, optimizer, batch):
     encoder.train()
     decoder.train()
 
@@ -73,7 +73,7 @@ def train_batch(encoder, decoder, optimizer, batch):
     return loss_terms, results
 
 
-def train(opt, exp, encoder, decoder, optimizer, loaders):
+def train(opt, device, encoder, decoder, optimizer, loaders):
     print("\n[Train] Training for {} epochs.".format(opt.epochs))
 
     (train_ae_loader, train_key_loader,
@@ -85,7 +85,7 @@ def train(opt, exp, encoder, decoder, optimizer, loaders):
         for epoch in range(epochs):
             for batch in train_ae_loader:
 
-                (loss, actual_loss, key_perc), results = train_batch(encoder, decoder,
+                (loss, actual_loss, key_perc), results = train_batch(device, encoder, decoder,
                                                                      optimizer, batch)
 
                 pbar.set_description("Epoch {}".format(epoch + 1))
@@ -93,26 +93,20 @@ def train(opt, exp, encoder, decoder, optimizer, loaders):
                 pbar.update()
 
                 # Evaluation
-                # if epoch % opt.save_every == 0:
-                #     utils.save_model(opt, exp, encoder, decoder)
-                #     eval.evaluate(opt, exp, device, encoder, decoder, "train",
-                #                   train_ae_loader, train_key_loader, pbar, log=True)
-                #     eval.evaluate(opt, exp, device, encoder, decoder, "val",
-                #                   val_ae_loader, val_key_loader, pbar, log=True)
-                #     eval.evaluate(opt, exp, device, encoder, decoder, "test",
-                #                   test_ae_loader, test_key_loader, pbar, log=True)
-                # else:
-                #     if epoch % opt.train_every == 0:
-                #         eval.evaluate(opt, exp, device, encoder, decoder, "train",
-                #                       train_ae_loader, train_key_loader, pbar, log=True)
+                if epoch % opt.save_every == 0:
+                    utils.save_model(encoder, decoder, parameter, epoch, False)
+                    eval.evaluate(opt, device, encoder, decoder, train_ae_loader, parameter)
+                    eval.evaluate(opt, device, encoder, decoder, val_ae_loader, parameter)
+                    # eval.evaluate(opt, device, encoder, decoder, test_ae_loader, parameter)
+                else:
+                    if epoch % opt.train_every == 0:
+                        eval.evaluate(opt, device, encoder, decoder, train_ae_loader, parameter)
 
-                #     if epoch % opt.val_every == 0:
-                #         eval.evaluate(opt, exp, device, encoder, decoder, "val",
-                #                       val_ae_loader, val_key_loader, pbar, log=True)
+                    if epoch % opt.val_every == 0:
+                        eval.evaluate(opt, device, encoder, decoder, val_ae_loader, parameter)
 
-                #     if epoch % opt.test_every == 0:
-                #         eval.evaluate(opt, exp, device, encoder, decoder, "test",
-                #                       test_ae_loader, test_key_loader, pbar, log=True)
+                    # if epoch % opt.test_every == 0:
+                        # eval.evaluate(opt, device, encoder, decoder, test_ae_loader, parameter)
 
 
 def main(opt, exp, device):
@@ -140,12 +134,10 @@ def main(opt, exp, device):
     optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
 
     # Train
-    train(opt,
-          exp,
-          encoder,
-          decoder,
-          optimizer,
-          loaders)
+    train(opt, device, encoder, decoder, optimizer, loaders)
+
+    # Save model
+    utils.save_model(encoder, decoder, parameter, epochs)
 
 
 if __name__ == "__main__":
@@ -159,6 +151,7 @@ if __name__ == "__main__":
     opt = parser.parse_args()
     exp = utils.name_exp(opt)
     device = utils.init_device()
+    parser = configargparse.ArgumentParser(description="train.py")
 
     utils.init_seed(opt.seed)
     main(opt, exp, device)

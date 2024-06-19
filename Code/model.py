@@ -115,7 +115,7 @@ class Decoder(nn.Module):
                                 out_features=self.num_tokens,
                                 bias=True)
 
-    def forward(self, tokens, trg_seqs):
+    def forward(self, tokens, trg_seqs, decode_function='teacher'):
         batch_size = 1  # for now, otherwise uncomment the next line
         # batch_size = tokens.size(0)
 
@@ -149,10 +149,16 @@ class Decoder(nn.Module):
 
         # print('last word:')
         # print(last_word)
-
-        sentence, p_words = self.teacher_forcing_decode(tokens, trg_seqs,
-                                                        encoder_hidden, encoded,
-                                                        decoder_hidden, last_word)
+        if decode_function == 'teacher':
+            sentence, p_words = self.teacher_forcing_decode(tokens, trg_seqs,
+                                                            encoder_hidden, encoded,
+                                                            decoder_hidden, last_word)
+        elif decode_function == 'greedy':
+            sentence, p_words = self.greedy_decode(tokens,
+                                                   encoder_hidden, encoded,
+                                                   decoder_hidden, last_word)
+        else:
+            print('Unknown decode function')
 
         # print('final sentence:')
         # print(sentence)
@@ -203,9 +209,11 @@ class Decoder(nn.Module):
             # print('sentence:')
             # print(sentence)
             # print([self.id2word[word] for word in sentence])
-            last_word = torch.tensor([last_word] * batch_size).to(self.device)
-            p_words.append(p_word[last_word])
-            if torch.equal(last_word, torch.tensor(self.word2id["<eos>"])):
+            # last_word = torch.tensor([last_word] * batch_size).to(self.device)
+            p_words.append(p_word.squeeze(0)[last_word])
+
+            # If we generate the end of sentence symbol, stop
+            if torch.equal(torch.tensor(last_word), torch.tensor(self.word2id["<eos>"])):
                 return sentence, p_words
 
         return sentence, p_words
