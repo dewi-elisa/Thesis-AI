@@ -42,7 +42,7 @@ def eval_batch(device, encoder, decoder, batch, parameter):
         subsentence_lines = [encoder.id2word[x.item()] for x in subsentence]
 
         # Decode
-        sentence, log_prob_sentence = decoder(subsentence, trg_seqs, decode_function='teacher')
+        sentence, log_prob_sentence = decoder(subsentence, trg_seqs, decode_function='greedy')
         sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
 
         # Calculate metrics

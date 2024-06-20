@@ -209,7 +209,7 @@ class Decoder(nn.Module):
             # print('sentence:')
             # print(sentence)
             # print([self.id2word[word] for word in sentence])
-            # last_word = torch.tensor([last_word] * batch_size).to(self.device)
+            last_word = torch.tensor([last_word] * batch_size).to(self.device)
             p_words.append(p_word.squeeze(0)[last_word])
 
             # If we generate the end of sentence symbol, stop
