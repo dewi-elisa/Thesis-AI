@@ -1,9 +1,5 @@
-import os
 import datetime
 
-# local = "/Users/minalee/acl19"
-# server = "/u/scr/minalee/autocomplete"
-# default_path = local if os.path.exists(local) else server
 default_path = "/Users/dewi-elisa/Documents/Uni/scriptie KI/Thesis-AI/Code"
 
 
@@ -33,8 +29,7 @@ def basic_opts(parser):
     group = parser.add_argument_group("Data")
     group.add("--num_examples",
               type=int,
-              default=5)
-            #   default=500000)
+              default=5)  # default=500000)
     group.add("--max_seq_len",
               type=int,
               default=20)
@@ -85,8 +80,7 @@ def train_opts(parser):
     group = parser.add_argument_group("Optimization")
     group.add("--batch_size",
               type=int,
-              default=1)
-            #   default=128)
+              default=1)  # default=128)
     group.add("--encoder_optimizer",
               type=str,
               default="sgd")

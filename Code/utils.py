@@ -8,8 +8,6 @@ import torch
 import torch.utils.data
 from tensorboardX import SummaryWriter
 
-import matplotlib.pyplot as plt
-
 
 def name_exp(opt):
     if opt.uniform_encoder:
@@ -69,7 +67,7 @@ def init_writer(opt, exp):
 
 
 def save_model(encoder, decoder, parameter, epoch, structured=False):
-    if structured == True:
+    if structured is True:
         structured = 'structured'
     else:
         structured = 'unstructured'

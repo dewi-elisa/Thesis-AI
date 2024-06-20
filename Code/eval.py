@@ -135,7 +135,6 @@ def get_figure_data(opt, device, encoder, decoder, optimizer, loaders):
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
 
-
     return efficiencies, accuracies, parameters
 
 
