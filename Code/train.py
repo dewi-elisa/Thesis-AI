@@ -15,7 +15,7 @@ import eval
 
 learning_rate = 0.001
 parameter = 4.3
-epochs = 2
+epochs = 10
 
 
 def calculate_loss(subsentence, log_q_alpha, log_p_beta):
@@ -131,7 +131,8 @@ def main(opt, exp, device):
     decoder = model.Decoder(opt, word2id, id2word, device)
 
     # Optimizer
-    optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
+                           lr=learning_rate)
 
     # Train
     train(opt, device, encoder, decoder, optimizer, loaders)

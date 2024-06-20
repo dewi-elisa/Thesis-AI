@@ -213,7 +213,7 @@ class Decoder(nn.Module):
             p_words.append(p_word.squeeze(0)[last_word])
 
             # If we generate the end of sentence symbol, stop
-            if torch.equal(torch.tensor(last_word), torch.tensor(self.word2id["<eos>"])):
+            if torch.equal(last_word, torch.tensor(self.word2id["<eos>"])):
                 return sentence, p_words
 
         return sentence, p_words

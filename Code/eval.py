@@ -85,7 +85,7 @@ def evaluate(opt, device, encoder, decoder, loader, parameter):
     return results_all, avg_efficiency, avg_loss, accuracy_all, avg_recon_loss
 
 
-def get_figure_data(opt, device, encoder, decoder, optimizer, loaders):
+def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
     (train_ae_loader, train_key_loader,
      val_ae_loader, val_key_loader,
      test_ae_loader, test_key_loader) = loaders
@@ -94,16 +94,16 @@ def get_figure_data(opt, device, encoder, decoder, optimizer, loaders):
     accuracies = []
 
     parameters = [4, 4.2, 4.4, 4.6, 4.8, 5.0]
-    epoch = 2
+    epoch = 10
     structured = 'unstructured'
     for parameter in parameters:
-        model = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
+        model_name = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
 
         # If model is available, get data
-        if os.path.exists('models/' + model):
+        if os.path.exists('models/' + model_name):
             print()
-            print('Loading model ' + model + '...')
-            utils.load_model(model, encoder, decoder)
+            print('Loading model ' + model_name + '...')
+            utils.load_model(model_name, encoder, decoder)
 
             print('Evaluating the model...')
             encoder.eval()
@@ -115,10 +115,11 @@ def get_figure_data(opt, device, encoder, decoder, optimizer, loaders):
             accuracies.append(accuracy)
         else:
             print()
-            print(model + ' not available!')
+            print(model_name + ' not available!')
             encoder = model.Encoder(opt, word2id, id2word, device)
             decoder = model.Decoder(opt, word2id, id2word, device)
-            optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
+            optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
+                                   lr=learning_rate)
 
             print('Training it now...')
             train.train(opt, device, encoder, decoder, optimizer, loaders)
@@ -158,7 +159,6 @@ if __name__ == "__main__":
     opt = parser.parse_args()
     exp = utils.name_exp(opt)
     device = utils.init_device()
-    parser = configargparse.ArgumentParser(description="train.py")
 
     utils.init_seed(opt.seed)
 
@@ -176,10 +176,12 @@ if __name__ == "__main__":
     decoder = model.Decoder(opt, word2id, id2word, device)
 
     # Optimizer
-    optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
+                           lr=learning_rate)
 
     efficiency, accuracy, parameters = get_figure_data(opt, device,
                                                        encoder, decoder,
+                                                       word2id, id2word,
                                                        optimizer, loaders)
 
     # parameters = [4, 4.2, 4.4, 4.6, 4.8, 5.0]
