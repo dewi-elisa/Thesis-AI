@@ -36,6 +36,7 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
 
     encoder.eval()
     decoder.eval()
+
     with torch.no_grad():
         # Encode
         subsentence, log_prob_mask = encoder(src_seqs)
@@ -52,13 +53,13 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
             sentence = sentence[1:] + [word2id['<eos>']]
 
         # Calculate metrics
-        efficiency = (len(subsentence) / len(src_seqs.squeeze(0))) * 100
+        efficiency = (len(subsentence) / len(src_seqs)) * 100
         loss = - log_prob_sentence
         accuracy = (src_seqs.tolist() == sentence)
         recon_loss = len(subsentence) + parameter * - log_prob_sentence
 
-        return (list(zip(src_lines, subsentence_lines, sentence_lines,
-                         src_seqs, subsentence, sentence)),
+        return (list((src_lines, subsentence_lines, sentence_lines,
+                      src_seqs, subsentence, sentence)),
                 efficiency, loss, accuracy, recon_loss)
 
 
@@ -75,6 +76,7 @@ def evaluate(opt, device, encoder, decoder, word2id, id2word, loader, parameter)
                                                                          encoder, decoder,
                                                                          word2id, id2word,
                                                                          batch, parameter)
+
         results_all.extend(results)
         efficiency_all.append(efficiency)
         loss_all.append(loss)
@@ -195,7 +197,7 @@ if __name__ == "__main__":
 
     # parameters = [4, 4.2, 4.4, 4.6, 4.8]
     # efficiency = [15, 20, 30, 40, 45]
-    # accuracy = [0, 3, 10, 15, 18]
+    accuracy = [0, 3, 10, 15, 18]
 
     plt.figure()
     print(efficiency)

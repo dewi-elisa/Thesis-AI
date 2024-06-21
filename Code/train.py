@@ -31,7 +31,7 @@ def train_batch(device, encoder, decoder, optimizer, batch):
     src_seqs = src_seqs.squeeze(0).to(device)
     trg_seqs = trg_seqs.squeeze(0).to(device)
 
-    batch_size, max_src_len = src_seqs.size()
+    # max_src_len = src_seqs.size()
 
     """
     Encode and decode
@@ -54,7 +54,7 @@ def train_batch(device, encoder, decoder, optimizer, batch):
     # num_key_tokens = torch.sum(key_seqs.gt(0), dim=1).float()
 
     # NOTE we count whitespace here for accurate rewards here
-    num_src_tokens = torch.sum(src_seqs.gt(0), dim=1).float()
+    num_src_tokens = torch.sum(src_seqs.gt(0), dim=0).float()
     num_key_tokens_from_encoder = float(subsentence.size(dim=0))
 
     kept_perc_per_sample = num_key_tokens_from_encoder / num_src_tokens
@@ -73,7 +73,7 @@ def train_batch(device, encoder, decoder, optimizer, batch):
     return loss_terms, results
 
 
-def train(opt, device, encoder, decoder, optimizer, loaders):
+def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
     print("\n[Train] Training for {} epochs.".format(opt.epochs))
 
     (train_ae_loader, train_key_loader,
@@ -95,18 +95,24 @@ def train(opt, device, encoder, decoder, optimizer, loaders):
                 # Evaluation
                 if epoch % opt.save_every == 0:
                     utils.save_model(encoder, decoder, parameter, epoch, False)
-                    eval.evaluate(opt, device, encoder, decoder, train_ae_loader, parameter)
-                    eval.evaluate(opt, device, encoder, decoder, val_ae_loader, parameter)
-                    # eval.evaluate(opt, device, encoder, decoder, test_ae_loader, parameter)
+                    eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
+                                  train_ae_loader, parameter)
+                    eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
+                                  val_ae_loader, parameter)
+                    # eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
+                    #               test_ae_loader, parameter)
                 else:
                     if epoch % opt.train_every == 0:
-                        eval.evaluate(opt, device, encoder, decoder, train_ae_loader, parameter)
+                        eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
+                                      train_ae_loader, parameter)
 
                     if epoch % opt.val_every == 0:
-                        eval.evaluate(opt, device, encoder, decoder, val_ae_loader, parameter)
+                        eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
+                                      val_ae_loader, parameter)
 
                     # if epoch % opt.test_every == 0:
-                        # eval.evaluate(opt, device, encoder, decoder, test_ae_loader, parameter)
+                        # eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
+                        #               test_ae_loader, parameter)
 
 
 def main(opt, exp, device):
@@ -135,7 +141,7 @@ def main(opt, exp, device):
                            lr=learning_rate)
 
     # Train
-    train(opt, device, encoder, decoder, optimizer, loaders)
+    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
 
     # Save model
     utils.save_model(encoder, decoder, parameter, epochs)
