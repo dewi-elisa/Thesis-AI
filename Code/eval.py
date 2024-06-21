@@ -46,14 +46,9 @@ def eval_batch(device, encoder, decoder, batch, parameter):
         sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
 
         # Calculate metrics
-        print(subsentence)
-        print(src_seqs)
         efficiency = (len(subsentence) / len(src_seqs.squeeze(0))) * 100
-        print(sentence)
-        print(efficiency)
         loss = - log_prob_sentence
         accuracy = (src_seqs == sentence)
-        print(accuracy)
         recon_loss = len(subsentence) + parameter * - log_prob_sentence
 
         return (list(zip(src_lines, subsentence_lines, sentence_lines,
@@ -212,7 +207,6 @@ if __name__ == "__main__":
     # plt.plot(efficiency, sigmoid(*popt), label="fit")
 
     for i, parameter in enumerate(parameters):
-        print('yooo')
         text = '$\lambda$ = ' + str(parameter)
         plt.text(efficiency[i]+1, accuracy[i]-.5, text)
 
