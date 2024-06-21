@@ -28,8 +28,8 @@ def train_batch(device, encoder, decoder, optimizer, batch):
     decoder.train()
 
     src_seqs, trg_seqs, src_lines, trg_lines = batch
-    src_seqs = src_seqs.to(device)
-    trg_seqs = trg_seqs.to(device)
+    src_seqs = src_seqs.squeeze(0).to(device)
+    trg_seqs = trg_seqs.squeeze(0).to(device)
 
     batch_size, max_src_len = src_seqs.size()
 

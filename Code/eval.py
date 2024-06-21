@@ -29,10 +29,10 @@ import matplotlib.pyplot as plt
 learning_rate = 0.001
 
 
-def eval_batch(device, encoder, decoder, batch, parameter):
+def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
     src_seqs, trg_seqs, src_lines, trg_lines = batch
-    src_seqs = src_seqs.to(device)
-    trg_seqs = trg_seqs.to(device)
+    src_seqs = src_seqs.squeeze(0).to(device)
+    trg_seqs = trg_seqs.squeeze(0).to(device)
 
     encoder.eval()
     decoder.eval()
@@ -45,10 +45,16 @@ def eval_batch(device, encoder, decoder, batch, parameter):
         sentence, log_prob_sentence = decoder(subsentence, trg_seqs, decode_function='greedy')
         sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
 
+        # Remove <sos> and add <eos>
+        if sentence[-1] == word2id["<eos>"]:
+            sentence = sentence[1:]
+        else:
+            sentence = sentence[1:] + [word2id['<eos>']]
+
         # Calculate metrics
         efficiency = (len(subsentence) / len(src_seqs.squeeze(0))) * 100
         loss = - log_prob_sentence
-        accuracy = (src_seqs == sentence)
+        accuracy = (src_seqs.tolist() == sentence)
         recon_loss = len(subsentence) + parameter * - log_prob_sentence
 
         return (list(zip(src_lines, subsentence_lines, sentence_lines,
@@ -56,7 +62,7 @@ def eval_batch(device, encoder, decoder, batch, parameter):
                 efficiency, loss, accuracy, recon_loss)
 
 
-def evaluate(opt, device, encoder, decoder, loader, parameter):
+def evaluate(opt, device, encoder, decoder, word2id, id2word, loader, parameter):
     results_all = []
     efficiency_all = []
     loss_all = []
@@ -67,6 +73,7 @@ def evaluate(opt, device, encoder, decoder, loader, parameter):
         with torch.no_grad():
             results, efficiency, loss, accuracy, recon_loss = eval_batch(device,
                                                                          encoder, decoder,
+                                                                         word2id, id2word,
                                                                          batch, parameter)
         results_all.extend(results)
         efficiency_all.append(efficiency)
@@ -110,6 +117,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             decoder.eval()
             # There is no test set, so val for now...
             _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
+                                                     word2id, id2word,
                                                      val_ae_loader, parameter)
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
@@ -132,6 +140,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             decoder.eval()
             # There is no test set, so val for now...
             _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
+                                                     word2id, id2word,
                                                      val_ae_loader, parameter)
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
