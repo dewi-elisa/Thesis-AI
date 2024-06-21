@@ -46,9 +46,14 @@ def eval_batch(device, encoder, decoder, batch, parameter):
         sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
 
         # Calculate metrics
-        efficiency = len(subsentence) / len(src_seqs) * 100
+        print(subsentence)
+        print(src_seqs)
+        efficiency = (len(subsentence) / len(src_seqs.squeeze(0))) * 100
+        print(sentence)
+        print(efficiency)
         loss = - log_prob_sentence
         accuracy = (src_seqs == sentence)
+        print(accuracy)
         recon_loss = len(subsentence) + parameter * - log_prob_sentence
 
         return (list(zip(src_lines, subsentence_lines, sentence_lines,
@@ -93,7 +98,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
     efficiencies = []
     accuracies = []
 
-    parameters = [4, 4.2, 4.4, 4.6, 4.8, 5.0]
+    parameters = [4, 4.2, 4.4, 4.6, 4.8]
     epoch = 10
     structured = 'unstructured'
     for parameter in parameters:
@@ -184,9 +189,9 @@ if __name__ == "__main__":
                                                        word2id, id2word,
                                                        optimizer, loaders)
 
-    # parameters = [4, 4.2, 4.4, 4.6, 4.8, 5.0]
-    # efficiency = [15, 20, 30, 40, 45, 65]
-    # accuracy = [0, 3, 10, 15, 18, 40]
+    # parameters = [4, 4.2, 4.4, 4.6, 4.8]
+    # efficiency = [15, 20, 30, 40, 45]
+    # accuracy = [0, 3, 10, 15, 18]
 
     plt.figure()
     print(efficiency)
@@ -207,6 +212,7 @@ if __name__ == "__main__":
     # plt.plot(efficiency, sigmoid(*popt), label="fit")
 
     for i, parameter in enumerate(parameters):
+        print('yooo')
         text = '$\lambda$ = ' + str(parameter)
         plt.text(efficiency[i]+1, accuracy[i]-.5, text)
 

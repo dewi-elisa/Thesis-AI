@@ -30,7 +30,7 @@ class Encoder(nn.Module):
                                 bias=True)
 
     def forward(self, tokens):
-        # print(tokens)
+        print(tokens)
 
         batch_size, max_len = tokens.size()
 
@@ -122,7 +122,8 @@ class Decoder(nn.Module):
         # build vocab
         # Q: in the code of the paper they build a dynamic vocab here, why is this needed?
         # A: not necessary for now, just use a single static vocab
-
+        print(tokens)
+        # print([self.id2word[x.item()] for x in tokens.squeeze(0)])
         # embed the tokens
         embedded = self.encoder_embedding(tokens)
         embedded = F.relu(F.dropout(embedded, p=0.1))
