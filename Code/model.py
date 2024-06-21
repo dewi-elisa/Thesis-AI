@@ -30,9 +30,9 @@ class Encoder(nn.Module):
                                 bias=True)
 
     def forward(self, tokens):
-        print(tokens)
+        # print(tokens)
 
-        batch_size, max_len = tokens.size()
+        # max_len = tokens.size()
 
         # Embed each token
         embedded = self.embedding(tokens)
@@ -40,7 +40,7 @@ class Encoder(nn.Module):
 
         # Score each token
         encoder_outputs, _ = self.encoder(embedded)
-        scores = self.linear(encoder_outputs).view(batch_size, -1)
+        scores = self.linear(encoder_outputs).squeeze(1)
 
         # print("scores:")
         # print(scores)
@@ -116,17 +116,20 @@ class Decoder(nn.Module):
                                 bias=True)
 
     def forward(self, tokens, trg_seqs, decode_function='teacher'):
-        batch_size = 1  # for now, otherwise uncomment the next line
+        # batch_size = 1  # for now, otherwise uncomment the next line
         # batch_size = tokens.size(0)
 
         # build vocab
         # Q: in the code of the paper they build a dynamic vocab here, why is this needed?
         # A: not necessary for now, just use a single static vocab
-        print(tokens)
+        # print(tokens)
         # print([self.id2word[x.item()] for x in tokens.squeeze(0)])
         # embed the tokens
         embedded = self.encoder_embedding(tokens)
         embedded = F.relu(F.dropout(embedded, p=0.1))
+
+        # print('embedded:')
+        # print(embedded)
 
         # encode the tokens
         encoded, (encoder_hidden, _) = self.encoder(embedded)
@@ -402,8 +405,8 @@ if __name__ == "__main__":
         # print(src_lines)
         # print(trg_lines)
 
-        src_seqs = src_seqs.to(device)
-        trg_seqs = trg_seqs.to(device)
+        src_seqs = src_seqs.squeeze(0).to(device)
+        trg_seqs = trg_seqs.squeeze(0).to(device)
         keywords, log_q_alpha = encoder(src_seqs)
         predicted, log_p_beta = decoder(keywords, trg_seqs)
 
