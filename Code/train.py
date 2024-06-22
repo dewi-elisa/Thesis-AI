@@ -12,18 +12,17 @@ import utils
 import data
 import model
 import eval
+import pickle
 
-learning_rate = 0.001
-parameter = 4.3
-epochs = 10
+learning_rate = 0.01
 
 
-def calculate_loss(subsentence, log_q_alpha, log_p_beta):
+def calculate_loss(subsentence, log_q_alpha, log_p_beta, parameter):
     f = len(subsentence) + parameter * - log_p_beta
     return log_q_alpha * f.detach() + f, f.detach()
 
 
-def train_batch(device, encoder, decoder, word2id, id2word, optimizer, batch):
+def train_batch(device, encoder, decoder, word2id, id2word, optimizer, batch, parameter):
     encoder.train()
     decoder.train()
 
@@ -32,7 +31,7 @@ def train_batch(device, encoder, decoder, word2id, id2word, optimizer, batch):
     trg_seqs = trg_seqs.squeeze(0).to(device)
 
     # Add <sos> to src_seqs
-    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
     # max_src_len = src_seqs.size()
 
@@ -64,7 +63,7 @@ def train_batch(device, encoder, decoder, word2id, id2word, optimizer, batch):
 
     # update optimizer
     optimizer.zero_grad()
-    loss, actual_loss = calculate_loss(subsentence, log_prob_mask, log_prob_sentence)
+    loss, actual_loss = calculate_loss(subsentence, log_prob_mask, log_prob_sentence, parameter)
     loss.backward()
     # torch.nn.utils.clip_grad_norm_(decoder.parameters(), opt.clip)
     optimizer.step()
@@ -76,12 +75,14 @@ def train_batch(device, encoder, decoder, word2id, id2word, optimizer, batch):
     return loss_terms, results
 
 
-def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
+def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders, parameter):
     print("\n[Train] Training for {} epochs.".format(opt.epochs))
 
     (train_ae_loader, train_key_loader,
      val_ae_loader, val_key_loader,
      test_ae_loader, test_key_loader) = loaders
+    
+    epochs=opt.epochs
 
     num_batches = len(train_ae_loader)
     with tqdm(total=epochs * num_batches) as pbar:
@@ -90,7 +91,7 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
 
                 (loss, actual_loss, key_perc), results = train_batch(device, encoder, decoder,
                                                                      word2id, id2word,
-                                                                     optimizer, batch)
+                                                                     optimizer, batch, parameter)
 
                 pbar.set_description("Epoch {}".format(epoch + 1))
                 pbar.set_postfix(loss=actual_loss)
@@ -137,18 +138,19 @@ def main(opt, exp, device):
     loaders = data.build_loaders(opt, tokenizer, word2id)
 
     # Model
-    encoder = model.Encoder(opt, word2id, id2word, device)
-    decoder = model.Decoder(opt, word2id, id2word, device)
+    encoder = model.Encoder(opt, word2id, id2word, device).to(device)
+    decoder = model.Decoder(opt, word2id, id2word, device).to(device)
 
     # Optimizer
     optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
                            lr=learning_rate)
 
     # Train
-    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
+    parameter = 4.3
+    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders, parameter)
 
     # Save model
-    utils.save_model(encoder, decoder, parameter, epochs)
+    utils.save_model(encoder, decoder, parameter, opt.epochs)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
     trg_seqs = trg_seqs.squeeze(0).to(device)
 
     # Add <sos> to src_seqs
-    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
     encoder.eval()
     decoder.eval()
@@ -43,24 +43,32 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
     with torch.no_grad():
         # Encode
         subsentence, log_prob_mask = encoder(src_seqs)
-        subsentence_lines = [encoder.id2word[x.item()] for x in subsentence]
+        subsentence_lines = [id2word[x.item()] for x in subsentence]
 
         # Decode
         sentence, log_prob_sentence = decoder(subsentence, trg_seqs, decode_function='greedy')
-        sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
+        sentence_lines = [id2word[x] for x in sentence]
 
         # Remove <sos> and <eos>
         if sentence[-1] == word2id["<eos>"]:
             sentence = sentence[1:-1]
         else:
             sentence = sentence[1:]
+        src_seqs = src_seqs[1:-1]
 
         # Calculate metrics
+        # print(src_lines)
+        # print(subsentence_lines)
+        # print(sentence_lines)
+        # print(src_seqs)
+        # print(subsentence)
+        # print(sentence)
         efficiency = (len(subsentence) / len(src_seqs.tolist())) * 100
-        loss = - log_prob_sentence
+        loss = - log_prob_sentence.item()
         accuracy = (src_seqs.tolist() == sentence)
-        recon_loss = len(subsentence) + parameter * - log_prob_sentence
-
+        recon_loss = len(subsentence) + parameter * - log_prob_sentence.item()
+        # print(accuracy)
+        # print()
         return (list((src_lines, subsentence_lines, sentence_lines,
                       src_seqs, subsentence, sentence)),
                 efficiency, loss, accuracy, recon_loss)
@@ -106,7 +114,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
     accuracies = []
 
     parameters = [4.0, 4.2, 4.4, 4.6, 4.8, 5.0]
-    epoch = 10
+    epoch = opt.epochs
     structured = 'unstructured'
     for parameter in parameters:
         model_name = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
@@ -115,7 +123,31 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
         if os.path.exists('models/' + model_name):
             print()
             print('Loading model ' + model_name + '...')
-            utils.load_model(model_name, encoder, decoder)
+            utils.load_model('lr_0.01/' + model_name, encoder, decoder)
+
+            print('Evaluating the model...')
+            encoder.eval()
+            decoder.eval()
+            # There is no test set, so val for now...
+            _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
+                                                     word2id, id2word,
+                                                     train_ae_loader, parameter)
+            efficiencies.append(efficiency)
+            accuracies.append(accuracy)
+        elif os.path.exists('models/lr_0.01/' + structured + '_' + str(parameter) + '_' + str(10) + '.pth'):
+            print()
+            print('Loading model ' + model_name + '...')
+            encoder = model.Encoder(opt, word2id, id2word, device).to(device)
+            decoder = model.Decoder(opt, word2id, id2word, device).to(device)
+            utils.load_model('lr_0.01/' + structured + '_' + str(parameter) + '_' + str(10) + '.pth', encoder, decoder)
+            optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
+                                   lr=learning_rate)
+            
+            print('Training it now...')
+            train.train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders, parameter)
+            
+            print('Saving it...')
+            utils.save_model(encoder, decoder, parameter, epoch+10)
 
             print('Evaluating the model...')
             encoder.eval()
@@ -129,13 +161,13 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
         else:
             print()
             print(model_name + ' not available!')
-            encoder = model.Encoder(opt, word2id, id2word, device)
-            decoder = model.Decoder(opt, word2id, id2word, device)
+            encoder = model.Encoder(opt, word2id, id2word, device).to(device)
+            decoder = model.Decoder(opt, word2id, id2word, device).to(device)
             optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
                                    lr=learning_rate)
 
             print('Training it now...')
-            train.train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
+            train.train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders, parameter)
 
             print('Saving it...')
             utils.save_model(encoder, decoder, parameter, epoch)
@@ -186,8 +218,8 @@ if __name__ == "__main__":
     loaders = data.build_loaders(opt, tokenizer, word2id)
 
     # Model
-    encoder = model.Encoder(opt, word2id, id2word, device)
-    decoder = model.Decoder(opt, word2id, id2word, device)
+    encoder = model.Encoder(opt, word2id, id2word, device).to(device)
+    decoder = model.Decoder(opt, word2id, id2word, device).to(device)
 
     # Optimizer
     optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
