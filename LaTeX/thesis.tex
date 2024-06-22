@@ -20,6 +20,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
+\newcommand{\approxtext}[1]{\ensuremath{\stackrel{\text{#1}}{\approx}}}
+
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{3}
 
@@ -255,19 +257,21 @@ In this research, we look at how we can use a latent segmentation model to retri
 The segmentation model will be implemented in the encoder of the encoder-decoder model in order to choose the best keywords from the sentence.
 
 \chapter{Experiment 1 \\ Replication}
-In the first experiment the encoder-decoder model from \citeA{autocomplete} was replicated. 
+In the first experiment the autoencoder model from \citeA{autocomplete} was replicated. 
 
 \section{Method}
+% TODO: write something here
 
 \subsection{Data}
 % What data? Data preprocessing? Data split?
 % TODO: They also say something about capitalisation -> do we do this too?
 % TODO: make a table with a few example sentences
+% TODO: descirbe train, validation and test set
 The same data was used as in \citeA{autocomplete}.
-The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \textcolor{orange}{(bron!)}.
+The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \cite{data}.
 Another 10K sentences were used to test the model. 
 The sentences had at most 16 tokens. 
-The reviews were segmented into sentences following the same procedure as \textcolor{orange}{Guu et al}. 
+The reviews were segmented into sentences following the same procedure as in \citeA{GuuKelvin2018GSbE}. 
 
 \subsection{Experimental Design}
 % What is the setup?
@@ -298,11 +302,38 @@ Finally, the probability of the next word is calculated using global attention a
 % <sos> anders verwoorden
 
 \paragraph{Optimization.} 
-The goal of the model is to be so efficient and accurate as possible. 
+The goal of the model is to be as efficient and accurate as possible. 
 If equation \ref{eq:cost} and \ref{eq:loss} are merged and a parameter $\lambda$ is added to represent the trade-off between the two, the goal becomes the following:
 \begin{equation}
+    \label{eq:loss2}
     \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \mathbb{E}[\text{loss}(x, \alpha, \beta)].
 \end{equation}
+Here the expactation is taken over $x$. 
+Since the gradients of equation \ref{eq:loss2} cannot be calculated, it is approximated with Monte Carlo.
+The gradients can then by calculated as following (see appendix \ref{app:gradients} for the exact derivations):
+% TODO: berekening in appendix
+\begin{equation}
+    \label{eq:gradient_alpha}
+    \nabla_\alpha F(\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\alpha} \log q_{\alpha}(z|x) f(z, \beta)],
+\end{equation}
+\begin{equation}
+    \label{eq:gradient_beta}
+    \nabla_\beta F(\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f (z, \beta)].
+\end{equation}
+Where, $f$ and the score function estimator $F$ (and its Monte Carlo approximation) are:
+\begin{equation}
+    \label{eq:f}
+    f(z, \beta) = \text{length}(z) + \lambda (-\log p_{\beta}(x|z)),
+\end{equation}
+\begin{equation}
+    \label{eq:F}
+    F (\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [f(z, \beta)],
+\end{equation}
+\begin{equation}
+    \label{eq:F_approx}
+    F (\alpha, \beta) \approxtext{M.C.} \frac{1}{M} \sum_i f (z^{(i)}, \beta).
+\end{equation}
+Here $M$ is the amount of samples drawn from $q_{\alpha}(z|x)$ and $x$ is dropped for clarity.
 
 \subsubsection{Hyperparameters}
 What are the hyperparameters?
@@ -313,9 +344,7 @@ What are the hyperparameters?
 % relu
 % implemented using PyTorch
 % log probability -> formal?
-
-\subsection{(Optimization)}
-What optimizations were done?
+% during training sos and eos toegevoegd, verwijderd met evaluatie
 
 \section{Results}
 
@@ -331,5 +360,64 @@ What optimizations were done?
 
 \bibliography{articles.bib}
 \bibliographystyle{apacite}
+
+\appendix
+\chapter{Optimization derivations}
+\label{app:gradients}
+Using equations \ref{eq:cost} and \ref{eq:loss}, the goal is:
+\begin{align*}
+    \quad & \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \mathbb{E}[\text{loss}(x, \alpha, \beta)] \\
+    &= \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha) + \lambda \text{loss}(x, \alpha, \beta)] \\
+    &= \min_{\alpha, \beta} \frac{1}{D} \sum_{x \in D}[\text{cost}(x, \alpha) + \lambda \text{loss}(x, \alpha, \beta)].
+\end{align*}
+
+\noindent $f$ can then be defined as:
+\begin{align*}
+    f(z, \beta) &= \text{cost}(x, \alpha) + \lambda \text{loss}(x, \alpha, \beta) \\
+    &= \text{length}(z) + \lambda (-\log p_{\beta}(x|z)).
+\end{align*}
+
+\noindent And $F$ as:
+\begin{align*}
+    F(\alpha, \beta) &= \mathbb{E}_{q_{\alpha}(z|x)} [[\text{length}(z) + \lambda (-\log p_{\beta}(x|z))]] \\
+    &=^{\ast} \sum_{z\in Z} [q_{\alpha}(z|x) f(z, \beta)] \\
+    &= \mathbb{E}_{q_{\alpha}(z|x)}[f(z, \beta)]
+\end{align*}
+where $Z$ consists of all the possible masks of size $x$. In the step marked with *, the following rule is used: $\mathbb{E}_{P(A)}[f(A)] = \sum_{a \in A}P(a)f(a)$. \\
+
+\noindent Thus, the goal then becomes:
+\begin{align*}
+    \min_{\alpha, \beta} F(\alpha, \beta).
+\end{align*}
+
+\noindent Since
+\begin{align*}
+    F(\alpha, \beta) \approxtext{M.C.} \frac{1}{M} \sum_i f(z^{i}, \beta)
+\end{align*}
+we also have that:
+\begin{align*}
+    \nabla_{\alpha} F(\alpha, \beta) \approxtext{M.C.} \nabla_{\alpha} \sum_i f(z^{i}, \beta) \\
+    \nabla_{\beta} F(\alpha, \beta) \approxtext{M.C.} \nabla_{\beta} \sum_i f(z^{i}, \beta).
+\end{align*}
+Where M.C. stands for Monte Carlo estimation. \\
+
+\noindent Therefore, we can calculate the gradients with respect to $\alpha$ as following:
+\begin{align*}
+    \nabla_{\alpha} F(\alpha, \beta) &= \nabla_{\alpha} \mathbb{E}_{q_{\alpha}(z|x)} [f(z, \beta)] \\
+    &= \nabla_{\alpha} \sum_z [q_{\alpha}(z|x) f(z, \beta)] \\
+    &= \sum_z \nabla_{\alpha} (q_{\alpha}(z|x) f(z, \beta)) \\
+    &=^\ast \sum_z (q_{\alpha}(z|x) [\nabla_{\alpha} \log q_{\alpha}(z|x) f(z, \beta)]) \\
+    &= \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\alpha} \log q_{\alpha}(z|x) f(z, \beta)].
+\end{align*}
+In the step marked with *, a log-derivative trick is used: $\nabla_t \log h(t) = \frac{\nabla_t h(t)}{h(t)}$. \\
+
+\noindent And the gradient with respect to $\beta$:
+\begin{align*}
+    \nabla_{\beta} F(\alpha, \beta) &= \nabla_{\beta} \mathbb{E}_{q_{\alpha}(z|x)}[f(z, \beta)] \\
+    &= \nabla_{\beta} \sum_z [q_{\alpha}(z|x)f(z, \beta)] \\
+    &= \sum_z \nabla_{\beta} (q_{\alpha}(z|x)f(z, \beta)) \\
+    &= \sum_z (q_{\alpha}(z|x) [\nabla_{\beta} f(z, \beta)]) \\
+    &= \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f(z, \beta)].
+\end{align*}
 
 \end{document}
