@@ -23,13 +23,16 @@ def calculate_loss(subsentence, log_q_alpha, log_p_beta):
     return log_q_alpha * f.detach() + f, f.detach()
 
 
-def train_batch(device, encoder, decoder, optimizer, batch):
+def train_batch(device, encoder, decoder, word2id, id2word, optimizer, batch):
     encoder.train()
     decoder.train()
 
     src_seqs, trg_seqs, src_lines, trg_lines = batch
     src_seqs = src_seqs.squeeze(0).to(device)
     trg_seqs = trg_seqs.squeeze(0).to(device)
+
+    # Add <sos> to src_seqs
+    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
 
     # max_src_len = src_seqs.size()
 
@@ -86,6 +89,7 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
             for batch in train_ae_loader:
 
                 (loss, actual_loss, key_perc), results = train_batch(device, encoder, decoder,
+                                                                     word2id, id2word,
                                                                      optimizer, batch)
 
                 pbar.set_description("Epoch {}".format(epoch + 1))

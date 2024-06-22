@@ -119,6 +119,17 @@ class Decoder(nn.Module):
         # batch_size = 1  # for now, otherwise uncomment the next line
         # batch_size = tokens.size(0)
 
+        # If no keywords were kept, tokens is just <sos> and <eos>
+        if torch.equal(tokens, torch.tensor([])):
+            tokens = torch.cat((torch.tensor([self.word2id['<sos>']]),
+                                torch.tensor([self.word2id['<eos>']])))
+        # Add <sos> to the tokens
+        if torch.ne(tokens[0], torch.tensor(self.word2id['<sos>'])):
+            tokens = torch.cat((torch.tensor([self.word2id['<sos>']]), tokens))
+        # Add <eos> to the tokens
+        if torch.ne(tokens[-1], torch.tensor(self.word2id['<eos>'])):
+            tokens = torch.cat((tokens, torch.tensor([self.word2id['<eos>']])))
+
         # build vocab
         # Q: in the code of the paper they build a dynamic vocab here, why is this needed?
         # A: not necessary for now, just use a single static vocab
@@ -407,6 +418,10 @@ if __name__ == "__main__":
 
         src_seqs = src_seqs.squeeze(0).to(device)
         trg_seqs = trg_seqs.squeeze(0).to(device)
+
+        # Add <sos> to src_seqs
+        src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+
         keywords, log_q_alpha = encoder(src_seqs)
         predicted, log_p_beta = decoder(keywords, trg_seqs)
 

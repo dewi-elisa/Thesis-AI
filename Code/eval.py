@@ -34,6 +34,9 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
     src_seqs = src_seqs.squeeze(0).to(device)
     trg_seqs = trg_seqs.squeeze(0).to(device)
 
+    # Add <sos> to src_seqs
+    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+
     encoder.eval()
     decoder.eval()
 
@@ -46,14 +49,14 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
         sentence, log_prob_sentence = decoder(subsentence, trg_seqs, decode_function='greedy')
         sentence_lines = [decoder.id2word[x.item()] for x in subsentence]
 
-        # Remove <sos> and add <eos>
+        # Remove <sos> and <eos>
         if sentence[-1] == word2id["<eos>"]:
-            sentence = sentence[1:]
+            sentence = sentence[1:-1]
         else:
-            sentence = sentence[1:] + [word2id['<eos>']]
+            sentence = sentence[1:]
 
         # Calculate metrics
-        efficiency = (len(subsentence) / len(src_seqs)) * 100
+        efficiency = (len(subsentence) / len(src_seqs.tolist())) * 100
         loss = - log_prob_sentence
         accuracy = (src_seqs.tolist() == sentence)
         recon_loss = len(subsentence) + parameter * - log_prob_sentence
@@ -102,7 +105,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
     efficiencies = []
     accuracies = []
 
-    parameters = [4, 4.2, 4.4, 4.6, 4.8]
+    parameters = [4.0, 4.2, 4.4, 4.6, 4.8, 5.0]
     epoch = 10
     structured = 'unstructured'
     for parameter in parameters:
@@ -132,7 +135,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
                                    lr=learning_rate)
 
             print('Training it now...')
-            train.train(opt, device, encoder, decoder, optimizer, loaders)
+            train.train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
 
             print('Saving it...')
             utils.save_model(encoder, decoder, parameter, epoch)
@@ -197,7 +200,7 @@ if __name__ == "__main__":
 
     # parameters = [4, 4.2, 4.4, 4.6, 4.8]
     # efficiency = [15, 20, 30, 40, 45]
-    accuracy = [0, 3, 10, 15, 18]
+    # accuracy = [0, 3, 10, 15, 18, 23]
 
     plt.figure()
     print(efficiency)

@@ -29,7 +29,7 @@ def basic_opts(parser):
     group = parser.add_argument_group("Data")
     group.add("--num_examples",
               type=int,
-              default=5)  # default=500000)
+              default=10)  # default=500000)
     group.add("--max_seq_len",
               type=int,
               default=20)
