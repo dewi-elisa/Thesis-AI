@@ -62,9 +62,9 @@ def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
         # print(subsentence)
         # print(sentence)
         efficiency = (len(subsentence) / len(src_seqs.tolist())) * 100
-        loss = - log_prob_sentence.item()
+        recon_loss = - log_prob_sentence.item()
         accuracy = (src_seqs.tolist() == sentence)
-        recon_loss = len(subsentence) + opt.linear_weight * - log_prob_sentence.item()
+        loss = len(subsentence) + opt.linear_weight * - log_prob_sentence.item()
 
         return (list((src_lines, subsentence_lines, sentence_lines,
                       src_seqs, subsentence, sentence)),

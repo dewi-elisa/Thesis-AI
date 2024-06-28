@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
     print()
     # print('Making the plots...')
-    # recon_loss_plot(opt, losses, opt.epochs, parameters)
-    # cost_plot(opt, efficiencies, opt.epochs, parameters)
-    # training_obj_plot(opt, recon_losses, opt.epochs, parameters)
-    # acc_vs_cost_plot(accuracies, efficiencies, parameters)
+    recon_loss_plot(opt, recon_losses, opt.epochs, parameters)
+    cost_plot(opt, efficiencies, opt.epochs, parameters)
+    training_obj_plot(opt, losses, opt.epochs, parameters)
+    acc_vs_cost_plot(accuracies, efficiencies, parameters)
