@@ -66,12 +66,12 @@ def init_writer(opt, exp):
     return writer
 
 
-def save_model(encoder, decoder, parameter, epoch, structured=False):
+def save_model(opt, encoder, decoder, epoch, structured=False):
     if structured is True:
         structured = 'structured'
     else:
         structured = 'unstructured'
-    name = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
+    name = structured + '_' + str(opt.linear_weight) + '_' + str(epoch) + '.pth'
 
     save_dict = {"decoder": decoder.state_dict()}
     save_dict.update({"encoder": encoder.state_dict()})

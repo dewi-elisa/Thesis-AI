@@ -87,6 +87,9 @@ def train_opts(parser):
     group.add("--decoder_optimizer",
               type=str,
               default="adam")
+    group.add("--learning_rate",
+              type=float,
+              default=0.001)
     group.add("--encoder_learning_rate",
               type=float,
               default=0.001)
@@ -137,7 +140,7 @@ def train_opts(parser):
               default=1)
     group.add("--epochs",
               type=int,
-              default=100000000)
+              default=10)
     group.add("--start_global_step",
               type=int,
               default=0)
@@ -156,7 +159,13 @@ def train_opts(parser):
               default=5000)
     group.add("--save_every",
               type=int,
-              default=2)  # default=50000)
+              default=10)  # default=50000)
+    group.add("--plot",
+              type=bool,
+              default=True)
+    group.add("--examples",
+              type=bool,
+              default=True)
     group.add("--n",
               type=int,
               default=4)

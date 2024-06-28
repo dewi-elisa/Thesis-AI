@@ -26,10 +26,8 @@ import matplotlib.pyplot as plt
 # from scipy.optimize import curve_fit
 # from scipy.interpolate import interp1d
 
-learning_rate = 0.001
 
-
-def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
+def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
     src_seqs, trg_seqs, src_lines, trg_lines = batch
     src_seqs = src_seqs.squeeze(0).to(device)
     trg_seqs = trg_seqs.squeeze(0).to(device)
@@ -59,14 +57,14 @@ def eval_batch(device, encoder, decoder, word2id, id2word, batch, parameter):
         efficiency = (len(subsentence) / len(src_seqs.tolist())) * 100
         loss = - log_prob_sentence
         accuracy = (src_seqs.tolist() == sentence)
-        recon_loss = len(subsentence) + parameter * - log_prob_sentence
+        recon_loss = len(subsentence) + opt.linear_weight * - log_prob_sentence
 
         return (list((src_lines, subsentence_lines, sentence_lines,
                       src_seqs, subsentence, sentence)),
                 efficiency, loss, accuracy, recon_loss)
 
 
-def evaluate(opt, device, encoder, decoder, word2id, id2word, loader, parameter):
+def evaluate(opt, device, encoder, decoder, word2id, id2word, loader):
     results_all = []
     efficiency_all = []
     loss_all = []
@@ -75,10 +73,10 @@ def evaluate(opt, device, encoder, decoder, word2id, id2word, loader, parameter)
 
     for batch_index, batch in enumerate(loader):
         with torch.no_grad():
-            results, efficiency, loss, accuracy, recon_loss = eval_batch(device,
+            results, efficiency, loss, accuracy, recon_loss = eval_batch(opt, device,
                                                                          encoder, decoder,
                                                                          word2id, id2word,
-                                                                         batch, parameter)
+                                                                         batch)
 
         results_all.extend(results)
         efficiency_all.append(efficiency)
@@ -91,7 +89,7 @@ def evaluate(opt, device, encoder, decoder, word2id, id2word, loader, parameter)
 
     avg_efficiency = np.mean(efficiency_all)
     avg_loss = np.mean(loss_all)
-    accuracy_all = np.sum(accuracy) / len(loss_all)
+    accuracy_all = np.sum(accuracy) / len(loss_all) * 100
     avg_recon_loss = np.mean(recon_loss_all)
 
     return results_all, avg_efficiency, avg_loss, accuracy_all, avg_recon_loss
@@ -106,10 +104,10 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
     accuracies = []
 
     parameters = [4.0, 4.2, 4.4, 4.6, 4.8, 5.0]
-    epoch = 10
     structured = 'unstructured'
     for parameter in parameters:
-        model_name = structured + '_' + str(parameter) + '_' + str(epoch) + '.pth'
+        model_name = structured + '_' + str(parameter) + '_' + str(opt.epochs) + '.pth'
+        opt.linear_weight = parameter
 
         # If model is available, get data
         if os.path.exists('models/' + model_name):
@@ -123,7 +121,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             # There is no test set, so val for now...
             _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
                                                      word2id, id2word,
-                                                     val_ae_loader, parameter)
+                                                     val_ae_loader)
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
         else:
@@ -132,13 +130,13 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             encoder = model.Encoder(opt, word2id, id2word, device)
             decoder = model.Decoder(opt, word2id, id2word, device)
             optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
-                                   lr=learning_rate)
+                                   lr=opt.learning_rate)
 
             print('Training it now...')
             train.train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
 
             print('Saving it...')
-            utils.save_model(encoder, decoder, parameter, epoch)
+            utils.save_model(encoder, decoder, opt.epochs)
 
             print('Evaluating the model...')
             encoder.eval()
@@ -146,20 +144,11 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             # There is no test set, so val for now...
             _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
                                                      word2id, id2word,
-                                                     val_ae_loader, parameter)
+                                                     val_ae_loader)
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
 
     return efficiencies, accuracies, parameters
-
-
-def func(x):
-    return 1 / (1 + np.exp(-x))
-
-
-def sigmoid(x, L, x0, k, b):
-    y = L / (1 + np.exp(-k*(x-x0))) + b
-    return (y)
 
 
 if __name__ == "__main__":
@@ -191,7 +180,7 @@ if __name__ == "__main__":
 
     # Optimizer
     optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
-                           lr=learning_rate)
+                           lr=opt.learning_rate)
 
     efficiency, accuracy, parameters = get_figure_data(opt, device,
                                                        encoder, decoder,
@@ -206,19 +195,6 @@ if __name__ == "__main__":
     print(efficiency)
     print(accuracy)
     plt.plot(efficiency, accuracy, marker='o')
-
-    # # fit the data to a curve
-    # optimizedParameters, pcov = curve_fit(func, efficiency, accuracy)
-    # print(optimizedParameters)
-    # # Use the optimized parameters to plot the best fit
-    # plt.plot(efficiency, func(*optimizedParameters), label="fit")
-
-    # f = interp1d(efficiency, accuracy)
-    # plt.plot(efficiency, f(efficiency))
-
-    # p0 = [max(accuracy), np.median(efficiency), 1, min(accuracy)]  # mandatory initial guess
-    # popt, pcov = curve_fit(sigmoid, efficiency, accuracy, p0)  # , method='dogbox')
-    # plt.plot(efficiency, sigmoid(*popt), label="fit")
 
     for i, parameter in enumerate(parameters):
         text = '$\lambda$ = ' + str(parameter)
