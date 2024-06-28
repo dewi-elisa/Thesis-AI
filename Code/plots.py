@@ -8,11 +8,6 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import configargparse
 import numpy as np
-import os
-
-
-def get_data():
-    pass
 
 
 def recon_loss_plot(opt, recon_loss, n_epochs, parameters):
@@ -22,8 +17,12 @@ def recon_loss_plot(opt, recon_loss, n_epochs, parameters):
 
     for i, parameter in enumerate(parameters):
         (recon_loss_training, recon_loss_val) = recon_loss[i]
-        plt.plot(x, recon_loss_training, label='training_' + str(parameter), linestyle='-', color=colors[i])
-        plt.plot(x, recon_loss_val, label='validation_' + str(parameter), linestyle=':', color=colors[i])
+        plt.plot(x, recon_loss_training,
+                 label='training_' + str(parameter),
+                 linestyle='-', color=colors[i])
+        plt.plot(x, recon_loss_val,
+                 label='validation_' + str(parameter),
+                 linestyle=':', color=colors[i])
 
     plt.xlabel('Epoch')
     plt.ylabel('Reconstruction loss')
@@ -38,8 +37,12 @@ def cost_plot(opt, cost, n_epochs, parameters):
 
     for i, parameter in enumerate(parameters):
         (cost_training, cost_val) = cost[i]
-        plt.plot(x, cost_training, label='training_' + str(parameter), linestyle='-', color=colors[i])
-        plt.plot(x, cost_val, label='validation_' + str(parameter), linestyle=':', color=colors[i])
+        plt.plot(x, cost_training,
+                 label='training_' + str(parameter),
+                 linestyle='-', color=colors[i])
+        plt.plot(x, cost_val,
+                 label='validation_' + str(parameter),
+                 linestyle=':', color=colors[i])
 
     plt.xlabel('Epoch')
     plt.ylabel('Cost (%)')
@@ -54,8 +57,12 @@ def training_obj_plot(opt, obj, n_epochs, parameters):
 
     for i, parameter in enumerate(parameters):
         (obj_training, obj_val) = obj[i]
-        plt.plot(x, obj_training, label='training_' + str(parameter), linestyle='-', color=colors[i])
-        plt.plot(x, obj_val, label='validation_' + str(parameter), linestyle=':', color=colors[i])
+        plt.plot(x, obj_training,
+                 label='training_' + str(parameter),
+                 linestyle='-', color=colors[i])
+        plt.plot(x, obj_val,
+                 label='validation_' + str(parameter),
+                 linestyle=':', color=colors[i])
 
     plt.xlabel('Epoch')
     plt.ylabel('Training objective')

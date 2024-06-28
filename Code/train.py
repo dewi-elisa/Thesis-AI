@@ -234,8 +234,7 @@ def main(opt, exp, device):
                            lr=opt.learning_rate)
 
     # Train
-    parameter = 4.3
-    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders, parameter)
+    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
 
     # Save model
     utils.save_model(encoder, decoder, opt.epochs)

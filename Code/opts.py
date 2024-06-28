@@ -1,6 +1,6 @@
 import datetime
 
-default_path = "E:\dewi\Thesis-AI-main\Code"
+default_path = "/Users/dewi-elisa/Documents/Uni/scriptie KI/Thesis-AI/Code/"
 
 
 def basic_opts(parser):
@@ -29,7 +29,7 @@ def basic_opts(parser):
     group = parser.add_argument_group("Data")
     group.add("--num_examples",
               type=int,
-              default=100)  # default=500000)
+              default=10)  # default=500000)
     group.add("--max_seq_len",
               type=int,
               default=20)
@@ -81,52 +81,9 @@ def train_opts(parser):
     group.add("--batch_size",
               type=int,
               default=1)  # default=128)
-    group.add("--encoder_optimizer",
-              type=str,
-              default="sgd")
-    group.add("--decoder_optimizer",
-              type=str,
-              default="adam")
     group.add("--learning_rate",
               type=float,
               default=0.001)
-    group.add("--encoder_learning_rate",
-              type=float,
-              default=0.001)
-    group.add("--decoder_learning_rate",
-              type=float,
-              default=0.001)
-    group.add("--lambdas_learning_rate",
-              type=float,
-              default=0.01)
-    group.add("--lambdas_momentum",
-              type=float,
-              default=0.)
-    group.add("--decay_encoder_lr",
-              action="store_true")
-    group.add("--decay_decoder_lr",
-              action="store_true")
-    group.add("--decay_lambda_lr",
-              action="store_true")
-    group.add("--step_sizeD",
-              type=int,
-              default=100000)
-    group.add("--gammaD",
-              type=float,
-              default=0.1)
-    group.add("--step_sizeE",
-              type=int,
-              default=10000)
-    group.add("--gammaE",
-              type=float,
-              default=0.1)
-    group.add("--step_sizeL",
-              type=int,
-              default=10000)
-    group.add("--gammaL",
-              type=float,
-              default=0.1)
-
     group.add("--clip",
               type=float,
               default=5.)
