@@ -47,7 +47,7 @@ def load_data(path, check_validity, reverse=False):
     Lines with non-ascii characters or lines which contain only punctuations
     and/or special tokens are considered invalid and filtered out.
     """
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         corpus = f.read()
         lines = corpus.split("\n")
     print("\n[Data Wrangling] Read {} lines of code.".format(len(lines)))

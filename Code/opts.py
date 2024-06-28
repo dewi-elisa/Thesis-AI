@@ -1,6 +1,6 @@
 import datetime
 
-default_path = "/Users/dewi-elisa/Documents/Uni/scriptie KI/Thesis-AI/Code"
+default_path = "E:\dewi\Thesis-AI-main\Code"
 
 
 def basic_opts(parser):
@@ -29,7 +29,7 @@ def basic_opts(parser):
     group = parser.add_argument_group("Data")
     group.add("--num_examples",
               type=int,
-              default=10)  # default=500000)
+              default=100)  # default=500000)
     group.add("--max_seq_len",
               type=int,
               default=20)

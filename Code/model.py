@@ -92,7 +92,7 @@ class Decoder(nn.Module):
 
         self.encoder_embedding = nn.Embedding(num_embeddings=self.num_tokens,
                                               embedding_dim=self.embedding_dim,
-                                              padding_idx=0)
+                                              padding_idx=0, device=self.device)
         self.decoder_embedding = nn.Embedding(num_embeddings=self.num_tokens,
                                               embedding_dim=self.embedding_dim * 2,
                                               padding_idx=0)
@@ -120,15 +120,15 @@ class Decoder(nn.Module):
         # batch_size = tokens.size(0)
 
         # If no keywords were kept, tokens is just <sos> and <eos>
-        if torch.equal(tokens, torch.tensor([])):
+        if torch.equal(tokens, torch.tensor([]).to(self.device)):
             tokens = torch.cat((torch.tensor([self.word2id['<sos>']]),
-                                torch.tensor([self.word2id['<eos>']])))
+                                torch.tensor([self.word2id['<eos>']]))).to(self.device)
         # Add <sos> to the tokens
-        if torch.ne(tokens[0], torch.tensor(self.word2id['<sos>'])):
-            tokens = torch.cat((torch.tensor([self.word2id['<sos>']]), tokens))
+        if torch.ne(tokens[0], torch.tensor(self.word2id['<sos>']).to(self.device)):
+            tokens = torch.cat((torch.tensor([self.word2id['<sos>']]).to(self.device), tokens))
         # Add <eos> to the tokens
-        if torch.ne(tokens[-1], torch.tensor(self.word2id['<eos>'])):
-            tokens = torch.cat((tokens, torch.tensor([self.word2id['<eos>']])))
+        if torch.ne(tokens[-1], torch.tensor(self.word2id['<eos>']).to(self.device)):
+            tokens = torch.cat((tokens, torch.tensor([self.word2id['<eos>']]).to(self.device)))
 
         # build vocab
         # Q: in the code of the paper they build a dynamic vocab here, why is this needed?
@@ -228,7 +228,7 @@ class Decoder(nn.Module):
             p_words.append(p_word.squeeze(0)[last_word])
 
             # If we generate the end of sentence symbol, stop
-            if torch.equal(last_word, torch.tensor(self.word2id["<eos>"])):
+            if torch.equal(last_word, torch.tensor(self.word2id["<eos>"]).to(self.device)):
                 return sentence, p_words
 
         return sentence, p_words
@@ -401,8 +401,8 @@ if __name__ == "__main__":
 
     # print(list(id2word.keys())[:100])
 
-    encoder = Encoder(opt, word2id, id2word, device)
-    decoder = Decoder(opt, word2id, id2word, device)
+    encoder = Encoder(opt, word2id, id2word, device).to(device)
+    decoder = Decoder(opt, word2id, id2word, device).to(device)
 
     loaders = data.build_loaders(opt, tokenizer, word2id)
     (train_ae_loader, train_key_loader,
@@ -418,9 +418,9 @@ if __name__ == "__main__":
 
         src_seqs = src_seqs.squeeze(0).to(device)
         trg_seqs = trg_seqs.squeeze(0).to(device)
-
+        
         # Add <sos> to src_seqs
-        src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+        src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
         keywords, log_q_alpha = encoder(src_seqs)
         predicted, log_p_beta = decoder(keywords, trg_seqs)

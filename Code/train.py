@@ -30,7 +30,7 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batc
     trg_seqs = trg_seqs.squeeze(0).to(device)
 
     # Add <sos> to src_seqs
-    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
     # max_src_len = src_seqs.size()
 
@@ -226,15 +226,16 @@ def main(opt, exp, device):
     loaders = data.build_loaders(opt, tokenizer, word2id)
 
     # Model
-    encoder = model.Encoder(opt, word2id, id2word, device)
-    decoder = model.Decoder(opt, word2id, id2word, device)
+    encoder = model.Encoder(opt, word2id, id2word, device).to(device)
+    decoder = model.Decoder(opt, word2id, id2word, device).to(device)
 
     # Optimizer
     optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
                            lr=opt.learning_rate)
 
     # Train
-    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
+    parameter = 4.3
+    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders, parameter)
 
     # Save model
     utils.save_model(encoder, decoder, opt.epochs)
