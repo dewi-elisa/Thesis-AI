@@ -1,0 +1,660 @@
+Epoch: 1
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.7855415344238281
+sentence:
+<sos> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> 
+log probability: -19.799991607666016
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> salt # content # was # pretty # good . <eos> 
+log probability: -2.563812732696533
+sentence:
+<sos> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> 
+log probability: -17.096622467041016
+
+
+Epoch: 2
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.32511603832244873
+sentence:
+<sos> <capf> the # and # and # and # and # and # and 
+log probability: -25.833932876586914
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # content # was # pretty # good . <eos> 
+log probability: -1.822818398475647
+sentence:
+<sos> <capf> the # and # and # and # and # and # 
+log probability: -23.697153091430664
+
+
+Epoch: 3
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.19594570994377136
+sentence:
+<sos> <capf> the # - # - # - # - # - # - 
+log probability: -17.00732421875
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.19442811608314514
+sentence:
+<sos> <capf> the # - # - # - # - # - # 
+log probability: -14.589080810546875
+
+
+Epoch: 4
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.11938715726137161
+sentence:
+<sos> <capf> the # is # is # is # is # is # is 
+log probability: -14.939773559570312
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # content # was # pretty # good . <eos> 
+log probability: -2.5418484210968018
+sentence:
+<sos> <capf> the # is # is # is # is # is # 
+log probability: -12.998406410217285
+
+
+Epoch: 5
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.11653495579957962
+sentence:
+<sos> <capf> the # is # is # is # is # is # is 
+log probability: -14.083939552307129
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.10490889102220535
+sentence:
+<sos> <capf> the # is # is # is # friendly . <eos> . 
+log probability: -11.467723846435547
+
+
+Epoch: 6
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.10399962961673737
+sentence:
+<sos> <capf> the # and # is # is # is # is # is 
+log probability: -12.546605110168457
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.12325228750705719
+sentence:
+<sos> <capf> the # and # is # is # is # is # 
+log probability: -11.167450904846191
+
+
+Epoch: 7
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.10661901533603668
+sentence:
+<sos> <capf> the # and # is # is # is # is # is 
+log probability: -12.349218368530273
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.09303340315818787
+sentence:
+<sos> <capf> the # and # is # is # is # is # 
+log probability: -11.3281831741333
+
+
+Epoch: 8
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.11030811816453934
+sentence:
+<sos> <capf> the # and # is # is # friendly . <eos> . <eos> 
+log probability: -9.396123886108398
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.10790041834115982
+sentence:
+<sos> <capf> the # and # is # friendly . <eos> # friendly . 
+log probability: -10.544261932373047
+
+
+Epoch: 9
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.13127905130386353
+sentence:
+<sos> <capf> the # dining # is # is # nice . <eos> . <eos> 
+log probability: -8.534225463867188
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.12683197855949402
+sentence:
+<sos> <capf> the # and # - # friendly . <eos> # tastic ! 
+log probability: -10.813112258911133
+
+
+Epoch: 10
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+log probability: -0.1479116678237915
+sentence:
+<sos> <capf> the # staff # is # an # institution . <eos> . <eos> 
+log probability: -7.460275173187256
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+log probability: -0.13354861736297607
+sentence:
+<sos> <capf> fast # and # thread # service . <eos> # service . 
+log probability: -7.631620407104492
+
+
+Epoch: 1
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+institution 
+log probability: -4.23860502243042
+sentence:
+<sos> <capf> <capf> <capf> 
+log probability: -3.0671439170837402
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+
+log probability: -0.9814929366111755
+sentence:
+<sos> <capf> <capf> 
+log probability: -2.2073721885681152
+
+
+Epoch: 2
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+# 
+log probability: -3.946342706680298
+sentence:
+<sos> <capf> the # 
+log probability: -3.0292398929595947
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+
+log probability: -0.7595803141593933
+sentence:
+<sos> <capf> the 
+log probability: -1.9595788717269897
+
+
+Epoch: 3
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+
+log probability: -0.8408713936805725
+sentence:
+<sos> <capf> the 
+log probability: -1.4154682159423828
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+
+log probability: -0.7815897464752197
+sentence:
+<sos> <capf> the 
+log probability: -1.3699432611465454
+
+
+Epoch: 4
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> # 
+log probability: -5.985016345977783
+sentence:
+<sos> <capf> the # 
+log probability: -1.0855016708374023
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+
+log probability: -0.9519413709640503
+sentence:
+<sos> <capf> the 
+log probability: -1.0878478288650513
+
+
+Epoch: 5
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<eos> 
+log probability: -3.3898165225982666
+sentence:
+<sos> <capf> the 
+log probability: -1.2319855690002441
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+
+log probability: -1.1063525676727295
+sentence:
+<sos> <capf> the 
+log probability: -1.2328124046325684
+
+
+Epoch: 6
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> 
+log probability: -2.8781135082244873
+sentence:
+<sos> <capf> the 
+log probability: -1.0632895231246948
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<eos> 
+log probability: -3.286581516265869
+sentence:
+<sos> <capf> the 
+log probability: -1.072961449623108
+
+
+Epoch: 7
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+
+log probability: -0.8870195746421814
+sentence:
+<sos> <capf> the 
+log probability: -1.1002918481826782
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+# . 
+log probability: -5.917477607727051
+sentence:
+<sos> <capf> the # and 
+log probability: -2.854508399963379
+
+
+Epoch: 8
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+
+log probability: -0.8360375165939331
+sentence:
+<sos> <capf> the 
+log probability: -1.1402554512023926
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> good 
+log probability: -6.137475967407227
+sentence:
+<sos> <capf> the # 
+log probability: -1.1307517290115356
+
+
+Epoch: 9
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<capf> 
+log probability: -4.043670177459717
+sentence:
+<sos> <capf> the # 
+log probability: -1.0994139909744263
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+# 
+log probability: -4.462150573730469
+sentence:
+<sos> <capf> the # 
+log probability: -1.104388952255249
+
+
+Epoch: 10
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+
+log probability: -0.2874603867530823
+sentence:
+<sos> <capf> the 
+log probability: -1.1415444612503052
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+
+log probability: -0.2641032934188843
+sentence:
+<sos> <capf> the 
+log probability: -1.1465080976486206
+
+
+Epoch: 1
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<capf> mr <capf> # # institution . <eos> 
+log probability: -10.186517715454102
+sentence:
+<sos> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> <capf> 
+log probability: -17.079740524291992
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # # # <eos> 
+log probability: -9.030267715454102
+sentence:
+<sos> <capf> <capf> <capf> <capf> <capf> <capf> <capf> 
+log probability: -13.310065269470215
+
+
+Epoch: 2
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<capf> mr <capf> is # institution . 
+log probability: -9.965872764587402
+sentence:
+<sos> <capf> the # is # friendly # friendly # 
+log probability: -16.075517654418945
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # # was # pretty <eos> 
+log probability: -8.418496131896973
+sentence:
+<sos> <capf> the # is # friendly # friendly # 
+log probability: -16.707046508789062
+
+
+Epoch: 3
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # <capf> is # an # . <eos> 
+log probability: -8.49896240234375
+sentence:
+<sos> <capf> the # is # is # - # - # 
+log probability: -11.398422241210938
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # pretty # <eos> 
+log probability: -8.91618537902832
+sentence:
+<sos> <capf> the # is # is # 
+log probability: -6.154392242431641
+
+
+Epoch: 4
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr <capf> hoagie an # . <eos> 
+log probability: -9.375290870666504
+sentence:
+<sos> <capf> the # is # is # is # 
+log probability: -8.37330436706543
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> # was pretty # good . 
+log probability: -8.859201431274414
+sentence:
+<sos> <capf> the # is # is # is # 
+log probability: -8.465326309204102
+
+
+Epoch: 5
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+mr # is . <eos> 
+log probability: -10.451112747192383
+sentence:
+<sos> <capf> the # and # is 
+log probability: -5.556174278259277
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> content was # good 
+log probability: -9.349843978881836
+sentence:
+<sos> <capf> the # and # is # 
+log probability: -5.651369094848633
+
+
+Epoch: 6
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<capf> # is # institution 
+log probability: -10.545626640319824
+sentence:
+<sos> <capf> the # and # is # 
+log probability: -4.966875076293945
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> salt # was # good <eos> 
+log probability: -9.300678253173828
+sentence:
+<sos> <capf> the # and # is # 
+log probability: -5.143229961395264
+
+
+Epoch: 7
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr <capf> hoagie is . <eos> 
+log probability: -9.741105079650879
+sentence:
+<sos> <capf> the # and # is # is 
+log probability: -6.55665922164917
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt content # good 
+log probability: -9.433136940002441
+sentence:
+<sos> <capf> the # and # is # 
+log probability: -4.654562473297119
+
+
+Epoch: 8
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<capf> # # is # an institution . 
+log probability: -9.496474266052246
+sentence:
+<sos> <capf> the # and # is # friendly . <eos> 
+log probability: -7.644775390625
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # content was # <eos> 
+log probability: -8.914451599121094
+sentence:
+<sos> <capf> the # and # friendly # friendly 
+log probability: -7.618873596191406
+
+
+Epoch: 9
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> <capf> mr # hoagie is # 
+log probability: -9.683900833129883
+sentence:
+<sos> <capf> the # and # is # friendly 
+log probability: -6.812429428100586
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<capf> salt # pretty # <eos> 
+log probability: -8.944397926330566
+sentence:
+<sos> <capf> the # and # is # 
+log probability: -4.337035179138184
+
+
+Epoch: 10
+Train example:
+src_seqs:
+<sos> <capf> mr # <capf> hoagie # is # an # institution . <eos> 
+subsentence:
+<sos> mr # <capf> # is # an # . 
+log probability: -8.934572219848633
+sentence:
+<sos> <capf> the # and # is # friendly . <eos> . 
+log probability: -6.816244125366211
+
+Validation example:
+src_seqs:
+<sos> <capf> salt # content # was # pretty # good . <eos> 
+subsentence:
+<sos> <capf> salt # . 
+log probability: -9.454544067382812
+sentence:
+<sos> <capf> the # and # is 
+log probability: -4.2515974044799805
+
+
