@@ -90,6 +90,7 @@ class Decoder(nn.Module):
         self.word2id = word2id
         self.id2word = id2word
         self.num_tokens = len(word2id)
+        self.opt = opt
         self.embedding_dim = opt.embedding_dim
 
         self.encoder_embedding = nn.Embedding(num_embeddings=self.num_tokens,
@@ -217,11 +218,11 @@ class Decoder(nn.Module):
         return sentence, p_words
 
     def greedy_decode(self, tokens, encoder_hidden, encoded, decoder_hidden, last_word):
-        batch_size, max_seq_len = 1, tokens.size()[0]
+        batch_size = 1
         sentence = [last_word.item()]
         p_words = []
 
-        for decoder_step in range(max_seq_len):
+        for decoder_step in range(self.opt.max_seq_len):
             p_word, decoder_hidden = self.decode(tokens, encoder_hidden, encoded,
                                                  decoder_hidden, last_word)
 
