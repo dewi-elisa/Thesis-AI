@@ -92,18 +92,18 @@ class Tokenizer:
                 elif token.islower():
                     results.append(token)
                 elif token.isupper():
-                    results.append('<capa>')
+                    # results.append('<capa>')
                     results.append(token.lower())
                 elif token[0].isupper() and token[1:].islower():
-                    results.append('<capf>')
+                    # results.append('<capf>')
                     results.append(token.lower())
                 else:
                     try:
                         for i, char in enumerate(token):
                             if token[i + 1].islower():  # MSELoss -> MSE Loss
-                                results.append('<capa>')
+                                # results.append('<capa>')
                                 results.append(token[:i].lower())
-                                results.append('<capf>')
+                                # results.append('<capf>')
                                 results.append(token[i:].lower())
                                 break
                     except Exception:  # Foreign languages
@@ -114,14 +114,15 @@ class Tokenizer:
         lowercased = []
         for token in tokens:
             if token == "#":
-                lowercased.append(token)
+                # lowercased.append(token)
+                continue
             elif token.islower():
                 lowercased.append(token)
             elif token.isupper():
-                lowercased.append("<capa>")
+                # lowercased.append("<capa>")
                 lowercased.append(token.lower())
             elif token[0].isupper() and token[1:].islower():
-                lowercased.append("<capf>")
+                # lowercased.append("<capf>")
                 lowercased.append(token.lower())
             else:
                 results = split_camel_case(token)
