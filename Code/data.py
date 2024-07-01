@@ -655,8 +655,10 @@ def build_loaders(opt, tokenizer, word2id):
             print(Style.RESET_ALL)
             break
 
-    val_ae_loader = get_loader(src_lines=full_lines[-num_val_examples:],
-                               trg_lines=full_lines[-num_val_examples:],
+    val_ae_loader = get_loader(src_lines=full_lines[:num_val_examples],
+                               trg_lines=full_lines[:num_val_examples],
+                            #    src_lines=full_lines[-num_val_examples:],
+                            #    trg_lines=full_lines[-num_val_examples:],
                                word2id=word2id,
                                num_examples=None,
                                max_seq_len=opt.max_seq_len,
