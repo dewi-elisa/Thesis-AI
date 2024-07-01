@@ -62,12 +62,14 @@ class Encoder(nn.Module):
 
         # Sample a mask with Bernoulli
         mask = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
+        mask2 = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
 
         # print("mask:")
         # print(mask)
 
         # Apply the mask
         subsentence = tokens[mask]
+        subsentence2 = tokens[mask2]
 
         # print("subsentence:")
         # print(subsentence)
@@ -78,7 +80,7 @@ class Encoder(nn.Module):
         log_prob_mask = torch.sum(mask * torch.log(prob_tokens)
                                   + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
 
-        return subsentence, log_prob_mask
+        return subsentence, log_prob_mask, subsentence2
 
 
 class Decoder(nn.Module):
@@ -228,7 +230,8 @@ class Decoder(nn.Module):
             p_words.append(p_word.squeeze(0)[last_word])
 
             # If we generate the end of sentence symbol, stop
-            if torch.equal(last_word, torch.tensor(self.word2id["<eos>"]).to(self.device)):
+            if torch.equal(last_word,
+                           torch.tensor([self.word2id["<eos>"]] * batch_size).to(self.device)):
                 return sentence, p_words
 
         return sentence, p_words
@@ -418,11 +421,11 @@ if __name__ == "__main__":
 
         src_seqs = src_seqs.squeeze(0).to(device)
         trg_seqs = trg_seqs.squeeze(0).to(device)
-        
+
         # Add <sos> to src_seqs
         src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
-        keywords, log_q_alpha = encoder(src_seqs)
+        keywords, log_q_alpha, _ = encoder(src_seqs)
         predicted, log_p_beta = decoder(keywords, trg_seqs)
 
         # print()

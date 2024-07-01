@@ -16,9 +16,10 @@ import model
 import eval
 
 
-def calculate_loss(opt, subsentence, log_q_alpha, log_p_beta):
+def calculate_loss(opt, subsentence, log_q_alpha, log_p_beta, subsentence2, log_p_beta2):
     f = len(subsentence) + opt.linear_weight * - log_p_beta
-    return log_q_alpha * f.detach() + f, f.detach()
+    f2 = len(subsentence2) + opt.linear_weight * - log_p_beta2
+    return log_q_alpha * (f.detach() - f2.detach()) + f, f.detach()
 
 
 def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batch):
@@ -38,7 +39,7 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batc
     Encode and decode
     """
     # Encode
-    subsentence, log_prob_mask = encoder(src_seqs)
+    subsentence, log_prob_mask, subsentence2 = encoder(src_seqs)
 
     # Process keywords
     # key_seqs, key_lines = decoder.postprocess(key_seqs=None,
@@ -47,6 +48,7 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batc
 
     # Decode
     sentence, log_prob_sentence = decoder(subsentence, trg_seqs)
+    _, log_prob_sentence2 = decoder(subsentence2, trg_seqs)
 
     """
     Stats
@@ -62,7 +64,8 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batc
 
     # update optimizer
     optimizer.zero_grad()
-    loss, actual_loss = calculate_loss(opt, subsentence, log_prob_mask, log_prob_sentence)
+    loss, actual_loss = calculate_loss(opt, subsentence, log_prob_mask, log_prob_sentence,
+                                       subsentence2, log_prob_sentence2)
     loss.backward()
     # torch.nn.utils.clip_grad_norm_(decoder.parameters(), opt.clip)
     optimizer.step()
@@ -88,7 +91,7 @@ def print_examples(encoder, decoder, word2id, id2word, f, src_seqs, trg_seqs):
 
     with torch.no_grad():
         # Encode
-        subsentence, log_prob_mask = encoder(src_seqs)
+        subsentence, log_prob_mask, _ = encoder(src_seqs)
 
         f.write('subsentence:\n')
         for token in subsentence.tolist():
@@ -237,7 +240,7 @@ def main(opt, exp, device):
     train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
 
     # Save model
-    utils.save_model(encoder, decoder, opt.epochs)
+    utils.save_model(opt, encoder, decoder, opt.epochs)
 
 
 if __name__ == "__main__":

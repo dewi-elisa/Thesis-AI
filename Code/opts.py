@@ -29,7 +29,7 @@ def basic_opts(parser):
     group = parser.add_argument_group("Data")
     group.add("--num_examples",
               type=int,
-              default=10)  # default=500000)
+              default=10)
     group.add("--max_seq_len",
               type=int,
               default=20)
@@ -37,7 +37,7 @@ def basic_opts(parser):
               default="remove",
               choices=["remove", "replace", "keep"])
     group.add("--capitalization",
-              default="default",
+              default="remove",
               choices=["remove", "default"])
 
     group = parser.add_argument_group("Vocabulary")
@@ -71,7 +71,7 @@ def train_opts(parser):
     # For linear objective
     group.add("--linear_weight",
               type=float,
-              default=1.)
+              default=10000)
 
     # Options for encoder
     group.add("--fix_encoder",
@@ -80,10 +80,10 @@ def train_opts(parser):
     group = parser.add_argument_group("Optimization")
     group.add("--batch_size",
               type=int,
-              default=1)  # default=128)
+              default=1)
     group.add("--learning_rate",
               type=float,
-              default=0.001)
+              default=0.01)
     group.add("--clip",
               type=float,
               default=5.)
@@ -97,7 +97,7 @@ def train_opts(parser):
               default=1)
     group.add("--epochs",
               type=int,
-              default=10)
+              default=30)
     group.add("--start_global_step",
               type=int,
               default=0)
@@ -116,7 +116,7 @@ def train_opts(parser):
               default=5000)
     group.add("--save_every",
               type=int,
-              default=10)  # default=50000)
+              default=10)
     group.add("--plot",
               type=bool,
               default=True)
@@ -141,7 +141,7 @@ def model_opts(parser):
     group = parser.add_argument_group("Architecture")
     group.add("--embedding_dim",
               type=int,
-              default=300)
+              default=16)
 
     # Uniform encoder
     group.add("--uniform_encoder",

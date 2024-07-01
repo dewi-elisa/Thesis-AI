@@ -40,7 +40,7 @@ def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
 
     with torch.no_grad():
         # Encode
-        subsentence, log_prob_mask = encoder(src_seqs)
+        subsentence, log_prob_mask, _ = encoder(src_seqs)
         subsentence_lines = [id2word[x.item()] for x in subsentence]
 
         # Decode
@@ -48,6 +48,13 @@ def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
         sentence_lines = [id2word[x] for x in sentence]
 
         # Remove <sos> and <eos>
+        if subsentence.size()[0] == 0:
+            subsentence = subsentence
+        elif subsentence[-1] == word2id["<eos>"]:
+            subsentence = subsentence[1:-1]
+        else:
+            subsentence = subsentence[1:]
+
         if sentence[-1] == word2id["<eos>"]:
             sentence = sentence[1:-1]
         else:
@@ -58,8 +65,10 @@ def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
         # print(src_lines)
         # print(subsentence_lines)
         # print(sentence_lines)
-        # print(src_seqs)
+        # print(src_seqs.tolist())
         # print(subsentence)
+        # print(trg_seqs)
+        # print()
         # print(sentence)
         efficiency = (len(subsentence) / len(src_seqs.tolist())) * 100
         recon_loss = - log_prob_sentence.item()

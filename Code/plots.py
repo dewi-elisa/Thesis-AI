@@ -123,7 +123,7 @@ if __name__ == "__main__":
     loaders = data.build_loaders(opt, tokenizer, word2id)
 
     # parameters = np.linspace(4, 5, 6).tolist()
-    parameters = [4.0, 4.3, 5.0]
+    parameters = [10000]
     print(parameters)
     efficiencies, losses, accuracies, recon_losses = [], [], [], []
 
