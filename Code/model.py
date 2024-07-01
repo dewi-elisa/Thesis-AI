@@ -321,28 +321,19 @@ class Decoder(nn.Module):
         Copy generator
         p(w) = (1 - p_gen) * p_{copy}(w) + p_gen * p_{word}(w)
         """
-        # Probability of generating a token for batch for one timestep
-        # decoder_hidden[0] [1, 64, hidden_size * 2]
-        # context [64, 1, hidden_size * 2]
-        # embedded [batch_size, hidden_size * 4]
+        # Probability of generating a token
         hcx = torch.cat([decoder_hidden[0].squeeze(0),
                          context.squeeze(1), embedded2], dim=1)
-        # p_gen [batch_size, 1]
         p_gen = self.sigmoid(self.linear_copy(hcx).view(batch_size, 1))
 
         # Probability of copying each token
-        # attn_weights [64, max_src_len]
-        # mul_attn [64, max_src_len]
-        # key_map [64, max_src_len, vocab_size]
         attn_weights = attn_weights.view(max_key_len)
 
-        # p_copy [64, vocab_size]
         p_copy = torch.zeros(len(self.word2id),
                              device=self.device).scatter_add(
                                  0, tokens, attn_weights)
 
         # Probability of predicting each token in vocab
-        # decoder_output [64, vocab_size]
         p_word = (1 - p_gen) * p_copy + p_gen * p_word
 
         return p_word, decoder_hidden
