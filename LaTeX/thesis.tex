@@ -306,7 +306,7 @@ The goal of the model is to be as efficient and accurate as possible.
 If equation \ref{eq:cost} and \ref{eq:loss} are merged and a parameter $\lambda$ is added to represent the trade-off between the two, the goal becomes the following:
 \begin{equation}
     \label{eq:loss2}
-    \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \mathbb{E}[\text{loss}(x, \alpha, \beta)].
+    \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \cdot \mathbb{E}[\text{loss}(x, \alpha, \beta)].
 \end{equation}
 Here the expactation is taken over $x$. 
 Since the gradients of equation \ref{eq:loss2} cannot be calculated, it is approximated with Monte Carlo.
@@ -320,10 +320,10 @@ The gradients can then by calculated as following (see appendix \ref{app:gradien
     \label{eq:gradient_beta}
     \nabla_\beta F(\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f (z, \beta)].
 \end{equation}
-Where, $f$ and the score function estimator $F$ (and its Monte Carlo approximation) are:
+Where, $f$ and the score function estimator (SFE) $F$ (and its Monte Carlo approximation) are:
 \begin{equation}
     \label{eq:f}
-    f(z, \beta) = \text{length}(z) + \lambda (-\log p_{\beta}(x|z)),
+    f(z, \beta) = \text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z)),
 \end{equation}
 \begin{equation}
     \label{eq:F}
@@ -336,15 +336,43 @@ Where, $f$ and the score function estimator $F$ (and its Monte Carlo approximati
 Here $M$ is the amount of samples drawn from $q_{\alpha}(z|x)$ and $x$ is dropped for clarity.
 
 \subsubsection{Hyperparameters}
-What are the hyperparameters?
-% learning rates
-% hidden dimension van LSTMs en embeddings is 300
-% Adam
-% During training: dropout
-% relu
-% implemented using PyTorch
-% log probability -> formal?
-% during training sos and eos toegevoegd, verwijderd met evaluatie
+During training, the sentences start with a <sos> symbol and end with a <eos> symbol.
+During evaluation of the model, those symbols are removed.
+
+The model is implemented using PyTorch \cite{pytorch}.
+After each token is embedded, ReLu is used. During training, dropout is used to prevent overfitting. 
+The hidden dimensions of the LSTM layers are all 300. 
+To optimize the model an Adam optimizer is used with a learning rate of 0.01. 
+
+\subsubsection{Optimizations}
+To let the model predict better results faster, a few optimizations were done.
+\paragraph{Copy mechanism.} The copy mechanism in the decoder determines if it wants to copy the current token or wants to generate a new token. 
+It therefore calculates the probability of the new word as following:
+\begin{equation}
+    p(w) = (1 - p_{\text{gen}}) \cdot p_{\text{copy}}(w) + p_{\text{gen}} \cdot p_{\text{word}}(\text{w}).
+\end{equation}
+For the calculation of the probability of the to be copied word, $p_{\text{copy}}$, the global attention mechanism from the decoder is used. 
+To calculate the probability of generating a new word, $p_{\text{gen}}$, the last hidden decoder state, the attention mechanism and the token embedding of the new to generated word are used in a linear layer followed by a sigmoid. 
+
+\paragraph{Adjusted data.} The model of \citeA{autocomplete} also predicts capital letters and whitespaces. 
+However, for English we can just assume that after every word a space is used. 
+Therefore, the data was adjust to leave out the characters for whitespaces. 
+Something similar is also true for capital letters: usually these only occur at the start of a sentence or in names. 
+It is thus not necessary to also predict capital letters. 
+
+In addition, the train and validation set were adjusted so that the validation set is a subset of the training set. 
+A reason for this was the many unkown tokens in the validation set if this was not done. 
+\citeA{autocomplete} used the copy mechanism and a dynamic vocabulary for this, but for the task at hand and the amount of data this also works.
+
+\paragraph{Variance reduction.} Because of the use of a SFE the gradient can be more prone to noise \cite{niculae2023discretelatentstructureneural}.
+To solve this problem, its variance can be reduced in a couple of ways. 
+One of those solutions is to sample a second subsentence in the encoder. 
+With this second subsentence, $f'$ can be determined and the loss can be calculated as following:
+\begin{equation}
+    \mathbb{E}_{q_w(Z)} [\nabla_w \log q_w(Z) \cdot (f(Z)-f')] + \mathbb{E}_{q_w(Z)} [\nabla_w f(Z)].
+\end{equation}
+Note that the gradient is not changed when subtracting $f'$ from $f(Z)$ since it is a constant which is independent of $w$.
+
 
 \section{Results}
 
@@ -366,20 +394,20 @@ What are the hyperparameters?
 \label{app:gradients}
 Using equations \ref{eq:cost} and \ref{eq:loss}, the goal is:
 \begin{align*}
-    \quad & \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \mathbb{E}[\text{loss}(x, \alpha, \beta)] \\
-    &= \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha) + \lambda \text{loss}(x, \alpha, \beta)] \\
-    &= \min_{\alpha, \beta} \frac{1}{D} \sum_{x \in D}[\text{cost}(x, \alpha) + \lambda \text{loss}(x, \alpha, \beta)].
+    \quad & \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \cdot \mathbb{E}[\text{loss}(x, \alpha, \beta)] \\
+    &= \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha) + \lambda \cdot \text{loss}(x, \alpha, \beta)] \\
+    &= \min_{\alpha, \beta} \frac{1}{D} \sum_{x \in D}[\text{cost}(x, \alpha) + \lambda \cdot \text{loss}(x, \alpha, \beta)].
 \end{align*}
 
 \noindent $f$ can then be defined as:
 \begin{align*}
-    f(z, \beta) &= \text{cost}(x, \alpha) + \lambda \text{loss}(x, \alpha, \beta) \\
-    &= \text{length}(z) + \lambda (-\log p_{\beta}(x|z)).
+    f(z, \beta) &= \text{cost}(x, \alpha) + \lambda \cdot \text{loss}(x, \alpha, \beta) \\
+    &= \text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z)).
 \end{align*}
 
 \noindent And $F$ as:
 \begin{align*}
-    F(\alpha, \beta) &= \mathbb{E}_{q_{\alpha}(z|x)} [[\text{length}(z) + \lambda (-\log p_{\beta}(x|z))]] \\
+    F(\alpha, \beta) &= \mathbb{E}_{q_{\alpha}(z|x)} [[\text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z))]] \\
     &=^{\ast} \sum_{z\in Z} [q_{\alpha}(z|x) f(z, \beta)] \\
     &= \mathbb{E}_{q_{\alpha}(z|x)}[f(z, \beta)]
 \end{align*}
