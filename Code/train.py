@@ -77,9 +77,9 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batc
     return loss_terms, results
 
 
-def print_examples(encoder, decoder, word2id, id2word, f, src_seqs, trg_seqs):
+def print_examples(device, encoder, decoder, word2id, id2word, f, src_seqs, trg_seqs):
     # Add <sos> to src_seqs
-    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]), src_seqs))
+    src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
     f.write('src_seqs:\n')
     for token in src_seqs.tolist():
@@ -194,16 +194,28 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
                         src_seqs = src_seqs.squeeze(0).to(device)
                         trg_seqs = trg_seqs.squeeze(0).to(device)
                         f.write('Train example:\n')
-                        print_examples(encoder, decoder, word2id, id2word, f, src_seqs, trg_seqs)
+                        print_examples(device, encoder, decoder, word2id, id2word, f,
+                                       src_seqs, trg_seqs)
                     for batch_index, batch in enumerate(val_ae_loader):
                         src_seqs, trg_seqs, src_lines, trg_lines = batch
                         src_seqs = src_seqs.squeeze(0).to(device)
                         trg_seqs = trg_seqs.squeeze(0).to(device)
                         f.write('Validation example:\n')
-                        print_examples(encoder, decoder, word2id, id2word, f, src_seqs, trg_seqs)
+                        print_examples(device, encoder, decoder, word2id, id2word, f,
+                                       src_seqs, trg_seqs)
                     f.write('\n')
 
     if opt.plot:
+        np.savez('models/results_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.npz',
+                 efficiencies_train=np.array(efficiencies_train),
+                 efficiencies_val=np.array(efficiencies_val),
+                 losses_train=np.array(losses_train),
+                 losses_val=np.array(losses_val),
+                 accuracies_train=np.array(accuracies_train),
+                 accuracies_val=np.array(accuracies_val),
+                 recon_losses_train=np.array(recon_losses_train),
+                 recon_losses_val=np.array(recon_losses_val))
+
         return (efficiencies_train,
                 efficiencies_val), (losses_train,
                                     losses_val), (accuracies_train,

@@ -8,6 +8,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import configargparse
 import numpy as np
+import os
 
 
 def recon_loss_plot(opt, recon_loss, n_epochs, parameters):
@@ -132,8 +133,8 @@ if __name__ == "__main__":
         model_name = 'unstructured' + '_' + str(parameter) + '_' + str(opt.epochs) + '.pth'
 
         # Model
-        encoder = model.Encoder(opt, word2id, id2word, device)
-        decoder = model.Decoder(opt, word2id, id2word, device)
+        encoder = model.Encoder(opt, word2id, id2word, device).to(device)
+        decoder = model.Decoder(opt, word2id, id2word, device).to(device)
 
         # Optimizer
         optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
@@ -154,7 +155,11 @@ if __name__ == "__main__":
         utils.save_model(opt, encoder, decoder, opt.epochs)
 
     print()
-    # print('Making the plots...')
+    print('Making the plots...')
+
+    if not os.path.exists("figs/"):
+        os.mkdir("figs")
+
     recon_loss_plot(opt, recon_losses, opt.epochs, parameters)
     cost_plot(opt, efficiencies, opt.epochs, parameters)
     training_obj_plot(opt, losses, opt.epochs, parameters)

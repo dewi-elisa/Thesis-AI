@@ -20402,3 +20402,663 @@ sentence:
 log probability: -0.039693478494882584
 
 
+Epoch: 1
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+hoagie an institution . 
+log probability: -5.492562294006348
+sentence:
+<sos> institution . . . . . . . . . . . . . . . . . . . 
+log probability: -24.141908645629883
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> hoagie is institution 
+log probability: -5.601376533508301
+sentence:
+<sos> institution . institution . . institution . institution . institution . institution . . institution . institution . institution . 
+log probability: -23.51013946533203
+
+
+Epoch: 2
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . 
+log probability: -4.096280574798584
+sentence:
+<sos> mr is is an an an an an an an an an an an an an an an an an 
+log probability: -27.146747589111328
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr an . <eos> 
+log probability: -5.46913480758667
+sentence:
+<sos> mr mr mr an an an an an an an an an an an <eos> 
+log probability: -20.04823875427246
+
+
+Epoch: 3
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr is an . <eos> 
+log probability: -4.796523571014404
+sentence:
+<sos> mr mr . <eos> 
+log probability: -4.195001602172852
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+mr hoagie is an institution . <eos> 
+log probability: -3.7951881885528564
+sentence:
+<sos> mr mr . <eos> 
+log probability: -4.420936584472656
+
+
+Epoch: 4
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is institution . <eos> 
+log probability: -3.363255023956299
+sentence:
+<sos> mr hoagie is is is is institution . <eos> 
+log probability: -8.812291145324707
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -1.9206982851028442
+sentence:
+<sos> mr hoagie is is an institution . <eos> 
+log probability: -9.027726173400879
+
+
+Epoch: 5
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.7021913528442383
+sentence:
+<sos> mr hoagie an institution institution . <eos> 
+log probability: -4.750773906707764
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+mr hoagie is an institution . <eos> 
+log probability: -2.089519500732422
+sentence:
+<sos> mr hoagie an institution . . . . . . . . . . . . . . . . 
+log probability: -11.920610427856445
+
+
+Epoch: 6
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.4419299364089966
+sentence:
+<sos> hoagie hoagie an institution . <eos> 
+log probability: -2.392481565475464
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.453986793756485
+sentence:
+<sos> hoagie hoagie is an institution . <eos> 
+log probability: -3.3118152618408203
+
+
+Epoch: 7
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.41482308506965637
+sentence:
+<sos> mr mr hoagie is an an an an institution institution institution institution institution institution institution institution institution institution institution institution 
+log probability: -10.146244049072266
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.4033578336238861
+sentence:
+<sos> mr mr hoagie is an an an an institution institution institution institution institution institution institution institution institution institution institution institution 
+log probability: -10.499439239501953
+
+
+Epoch: 8
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.3077566623687744
+sentence:
+<sos> mr institution . <eos> 
+log probability: -2.047591209411621
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+mr hoagie is an institution . <eos> 
+log probability: -2.1618125438690186
+sentence:
+<sos> mr institution . <eos> 
+log probability: -2.243968963623047
+
+
+Epoch: 9
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.21934300661087036
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -4.245379447937012
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr is institution . <eos> 
+log probability: -8.757501602172852
+sentence:
+<sos> mr mr is institution . <eos> 
+log probability: -2.423997402191162
+
+
+Epoch: 10
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . 
+log probability: -4.711336612701416
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -3.2230706214904785
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.1797005832195282
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -2.7657454013824463
+
+
+Epoch: 11
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.21633639931678772
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -1.6989597082138062
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.1565089076757431
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -2.256600856781006
+
+
+Epoch: 12
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.16901430487632751
+sentence:
+<sos> mr hoagie is institution . <eos> 
+log probability: -1.1255557537078857
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.15318389236927032
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -1.3752528429031372
+
+
+Epoch: 13
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.17998290061950684
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -1.2915202379226685
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.14241792261600494
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -1.0588245391845703
+
+
+Epoch: 14
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+mr hoagie is an institution . <eos> 
+log probability: -2.8632936477661133
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.5747454166412354
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.10598166286945343
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.6240077018737793
+
+
+Epoch: 15
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.06396442651748657
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.5504916310310364
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.06628035753965378
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.4798263609409332
+
+
+Epoch: 16
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.05831332132220268
+sentence:
+<sos> mr hoagie is an . <eos> 
+log probability: -0.4814002513885498
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.08520351350307465
+sentence:
+<sos> mr hoagie is an . <eos> 
+log probability: -0.867308497428894
+
+
+Epoch: 17
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.060627397149801254
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.683795154094696
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04924063757061958
+sentence:
+<sos> mr hoagie is institution . <eos> 
+log probability: -0.562278687953949
+
+
+Epoch: 18
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.05488437041640282
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -1.103062391281128
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.046956125646829605
+sentence:
+<sos> mr hoagie is an an . . <eos> 
+log probability: -2.1496124267578125
+
+
+Epoch: 19
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.046232081949710846
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.5924973487854004
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04641936346888542
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.28169557452201843
+
+
+Epoch: 20
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04589173197746277
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.19608956575393677
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.05719218775629997
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.2729188799858093
+
+
+Epoch: 21
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.045810308307409286
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.14550849795341492
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.049614664167165756
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.14236187934875488
+
+
+Epoch: 22
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04559214040637016
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.10617782175540924
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04767283797264099
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.17662060260772705
+
+
+Epoch: 23
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.06474258005619049
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.09243165701627731
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04646240547299385
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.13775897026062012
+
+
+Epoch: 24
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04205086827278137
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.10835360735654831
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04510761424899101
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.07944551110267639
+
+
+Epoch: 25
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+mr hoagie is an institution . <eos> 
+log probability: -3.8929336071014404
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.09151991456747055
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04213293641805649
+sentence:
+<sos> mr hoagie is an institution . . <eos> 
+log probability: -1.0212876796722412
+
+
+Epoch: 26
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04102391377091408
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.053288400173187256
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04227985814213753
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.10130671411752701
+
+
+Epoch: 27
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . 
+log probability: -5.9729766845703125
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.11456185579299927
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.0445280484855175
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.15118497610092163
+
+
+Epoch: 28
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04190538078546524
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.10148755460977554
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04063640162348747
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04419692978262901
+
+
+Epoch: 29
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.040036462247371674
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.0863574892282486
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04807056486606598
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.06494423002004623
+
+
+Epoch: 30
+Train example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04020165652036667
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.23322135210037231
+
+Validation example:
+src_seqs:
+<sos> mr hoagie is an institution . <eos> 
+subsentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.04187092185020447
+sentence:
+<sos> mr hoagie is an institution . <eos> 
+log probability: -0.21934333443641663
+
+

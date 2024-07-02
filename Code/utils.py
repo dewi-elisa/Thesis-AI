@@ -75,6 +75,10 @@ def save_model(opt, encoder, decoder, epoch, structured=False):
 
     save_dict = {"decoder": decoder.state_dict()}
     save_dict.update({"encoder": encoder.state_dict()})
+
+    if not os.path.exists("models/"):
+        os.mkdir("models")
+
     torch.save(save_dict, "models/" + name)
 
 
