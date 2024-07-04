@@ -187,7 +187,7 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
 
             if opt.examples:
                 # Write examples to file
-                with open('examples.txt', 'a') as f:
+                with open('examples_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.txt', 'a') as f:
                     f.write('Epoch: ' + str(epoch+1) + '\n')
                     for batch_index, batch in enumerate([next(iter(train_ae_loader))]):
                         src_seqs, trg_seqs, src_lines, trg_lines = batch
