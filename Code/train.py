@@ -22,7 +22,7 @@ def calculate_loss(opt, subsentence, log_q_alpha, log_p_beta, subsentence2, log_
     return log_q_alpha * (f.detach() - f2.detach()) + f, f.detach()
 
 
-def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batch):
+def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, optimizer_decoder, batch):
     encoder.train()
     decoder.train()
 
@@ -63,12 +63,14 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer, batc
     kept_perc_per_sample = num_key_tokens_from_encoder / num_src_tokens
 
     # update optimizer
-    optimizer.zero_grad()
+    optimizer_encoder.zero_grad()
+    optimizer_decoder.zero_grad()
     loss, actual_loss = calculate_loss(opt, subsentence, log_prob_mask, log_prob_sentence,
                                        subsentence2, log_prob_sentence2)
     loss.backward()
     # torch.nn.utils.clip_grad_norm_(decoder.parameters(), opt.clip)
-    optimizer.step()
+    optimizer_encoder.step()
+    optimizer_decoder.step()
 
     loss_terms = (loss.item(), actual_loss.item(), torch.mean(kept_perc_per_sample).item())
 
@@ -107,7 +109,7 @@ def print_examples(device, encoder, decoder, word2id, id2word, f, src_seqs, trg_
         f.write('\nlog probability: ' + str(log_prob_sentence.item()) + '\n\n')
 
 
-def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
+def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, optimizer_decoder, loaders):
     print("\n[Train] Training for {} epochs.".format(opt.epochs))
 
     (train_ae_loader, train_key_loader,
@@ -128,7 +130,9 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders):
                 (loss, actual_loss, key_perc), results = train_batch(opt, device,
                                                                      encoder, decoder,
                                                                      word2id, id2word,
-                                                                     optimizer, batch)
+                                                                     optimizer_encoder,
+                                                                     optimizer_decoder,
+                                                                     batch)
 
                 pbar.set_description("Epoch {}".format(epoch + 1))
                 pbar.set_postfix(loss=actual_loss)
@@ -244,12 +248,12 @@ def main(opt, exp, device):
     encoder = model.Encoder(opt, word2id, id2word, device).to(device)
     decoder = model.Decoder(opt, word2id, id2word, device).to(device)
 
-    # Optimizer
-    optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
-                           lr=opt.learning_rate)
+    # Optimizers
+    optimizer_encoder = optim.Adam(encoder.parameters(), lr=opt.learning_rate_encoder)
+    optimizer_decoder = optim.Adam(decoder.parameters(), lr=opt.learning_rate_decoder)
 
     # Train
-    train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
+    train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, optimizer_decoder, loaders)
 
     # Save model
     utils.save_model(opt, encoder, decoder, opt.epochs)

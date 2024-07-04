@@ -81,7 +81,10 @@ def train_opts(parser):
     group.add("--batch_size",
               type=int,
               default=1)
-    group.add("--learning_rate",
+    group.add("--learning_rate_encoder",
+              type=float,
+              default=0.001)
+    group.add("--learning_rate_decoder",
               type=float,
               default=0.01)
     group.add("--clip",
@@ -142,6 +145,9 @@ def model_opts(parser):
     group.add("--embedding_dim",
               type=int,
               default=16)
+    group.add("--segmentation",
+              type=bool,
+              default=False)
 
     # Uniform encoder
     group.add("--uniform_encoder",
