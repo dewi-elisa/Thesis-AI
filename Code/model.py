@@ -8,14 +8,17 @@ import torch.nn.functional as F
 import data
 import utils
 import opts
+# import segmentation
 
 
 class Encoder(nn.Module):
-    def __init__(self, opt, word2id, id2word, device):
+    def __init__(self, opt, word2id, id2word, device, a=None):
         super(Encoder, self).__init__()
         self.device = device
         self.word2id = word2id
         self.id2word = id2word
+        self.opt = opt
+        self.a = a
         self.num_tokens = len(word2id)
         self.embedding_dim = opt.embedding_dim
 
@@ -39,26 +42,30 @@ class Encoder(nn.Module):
         embedded = F.relu(F.dropout(embedded, p=0.1))  # why relu? -> try also without relu
 
         # Score each token
-        encoder_outputs, _ = self.encoder(embedded)
-        scores = self.linear(encoder_outputs).squeeze(1)
+        if self.opt.segmentation:
+            prob_tokens = None
+            # prob_tokens = segmentation.forward_alg(self.a)
+        else:
+            encoder_outputs, _ = self.encoder(embedded)
+            scores = self.linear(encoder_outputs).squeeze(1)
 
-        # print("scores:")
-        # print(scores)
+            # print("scores:")
+            # print(scores)
 
-        # Q: What happens here? It does not seem to change anyhting
-        # Does it replace the values in score with -inf when they are <= 0?
-        # But there are no tokens <= 0 in the vocab
-        # (is that why it does not seem to change anything?)
-        # A: padding = 0 -> for when working in batches,
-        # in that case uncomment the next line
-        # masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
-        masked_scores = scores
+            # Q: What happens here? It does not seem to change anyhting
+            # Does it replace the values in score with -inf when they are <= 0?
+            # But there are no tokens <= 0 in the vocab
+            # (is that why it does not seem to change anything?)
+            # A: padding = 0 -> for when working in batches,
+            # in that case uncomment the next line
+            # masked_scores = scores.masked_fill(tokens.gt(0).bitwise_not(), -float('inf'))
+            masked_scores = scores
 
-        # print("masked scores:")
-        # print(masked_scores)
+            # print("masked scores:")
+            # print(masked_scores)
 
-        # Apply sigmoid
-        prob_tokens = torch.sigmoid(masked_scores)
+            # Apply sigmoid
+            prob_tokens = torch.sigmoid(masked_scores)
 
         # Sample a mask with Bernoulli
         mask = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
