@@ -191,12 +191,12 @@ Therefore, a cost and a loss, respectively, can be defined:
 % TODO: add references
 % TODO: add Markov Models
 
-\subsubsection{General idea}
+\paragraph{General idea.}
 \textcolor{orange}{With a segmentation model all possible segmentation can be made. 
 A segmentation model scores every possible segmentation.
 With these scores, the model can determine what the best possible segmentation is.}
 
-\subsubsection{Segmentation model for text}
+\paragraph{Segmentation model for text.}
 So how does the segmentation model work for text? 
 If we have a sentence, e.g. \textit{'I will be late'}, we can use fencepost indexing and represent the fenceposts as nodes in a directed acyclic graph (DAG). 
 We can then draw edges between those nodes that represent segments. 
@@ -240,11 +240,17 @@ Both segmentations result in the keywords \textit{'will be late'}.
     \label{fig:segmentation_model}
 \end{figure}
 
-All segments can be scored with the help of the Forward algorithm. 
-After scoring each segment, the model can then choose the segments with the highest scores to retrieve the best possible segmentation. 
+The best segmentations can be found with the help of dynamic programming algorithms such the Viterbi and the forward algorithms. 
+% TODO: add HMMs
 
 \subsection{Structured latent variables}
-How does the model work? 
+A latent variable is an unobservable variable.
+For these variables, there are no labels available. 
+Therefore, it is not possible to use supervised learning on them. 
+In the case of this model, we try to recover the full sentence by inferring what is a good mask.
+The mask determines what words are good keywords and thus is a latent variable. 
+In addition, the segmentation model makes this a structured variable. 
+
 
 \section{Current research}
 % Gap
@@ -257,32 +263,42 @@ In this research, we look at how we can use a latent segmentation model to retri
 The segmentation model will be implemented in the encoder of the encoder-decoder model in order to choose the best keywords from the sentence.
 
 \chapter{Experiment 1 \\ Replication}
+\label{ch:repl}
 In the first experiment the autoencoder model from \citeA{autocomplete} was replicated. 
 
 \section{Method}
-% TODO: write something here
+To replicate the model, an encoder-decoder model was made. The encoder chooses which words to keep as keywords, and the decoder tries to retrieve the full sentence of the keywords. 
 
 \subsection{Data}
-% What data? Data preprocessing? Data split?
-% TODO: They also say something about capitalisation -> do we do this too?
+\label{sec:data}
 % TODO: make a table with a few example sentences
 % TODO: descirbe train, validation and test set
 The same data was used as in \citeA{autocomplete}.
 The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \cite{data}.
-Another 10K sentences were used to test the model. 
+Another 50K sentences were used to test the model. 
 The sentences had at most 16 tokens. 
 The reviews were segmented into sentences following the same procedure as in \citeA{GuuKelvin2018GSbE}. 
 
+The model of \citeA{autocomplete} also predicts capital letters and whitespaces. 
+However, for English we can just assume that after every word a space is used. 
+Therefore, the data was adjusted to leave out the characters for whitespaces. 
+Something similar is also true for capital letters: usually these only occur at the start of a sentence or in names. 
+It is thus not necessary to also predict capital letters. 
+
+\noindent\textcolor{red}{TODO: \begin{enumerate}
+    \item Table with example sentences
+    \item Adjust the number of sentences used for the training and the test set
+\end{enumerate}}
+
 \subsection{Experimental Design}
-% What is the setup?
-% TODO: check if it is indeed y_k, maybe y_m?
 The model used is an encoder-decoder model.
 The encoder, using the encoding strategy $q_{\alpha}(z|x)$, takes as input a target sequence $x = (x_1, \dots, x_m)$ and outputs a sequence of keywords $z = (z_1, \dots, z_n)$.
 The decoder, using the decoding strategy $p_{\beta}(x|z)$, then takes these keywords as input and outputs a predicted sequence $y = (y_1, \dots, y_k)$. 
 The better the autoencoder works, the more likely it is that $x$ and $y$ are equal. 
 
 \subsection{Model description}
-% What does the model look like? Which equations are used? Diagrams/pseudocode?
+\label{sec:model}
+% TODO: add diagram?
 \paragraph{Encoder.} 
 The encoder embeds the tokens and uses a uni-directional LSTM to score the tokens.
 An additional linear layer followed by sigmoid function is used to determine the probability of keeping each token. 
@@ -298,8 +314,10 @@ The decoder decodes the full sentence.
 It therefore embeds the already decoded sequence (or just the <sos> symbol if there is none) into a 300-dimensional vector and concatenates the last hidden state of the encoder* to it. 
 This embedding is the input for another uni-directional LSTM. 
 Finally, the probability of the next word is calculated using global attention and the full sentence and its log probability are returned. 
-% teacher forcing tijdens training, greedy tijdens test
-% <sos> anders verwoorden
+
+During training, the decoder is given the keywords and at every step the model takes the correct word from the target sequence and calculates the probability of that sequence.
+During testing, however, the decoder uses a greedy decoding strategy and thus takes the word with the highest probability as the next word. 
+% TODO: <sos> anders verwoorden
 
 \paragraph{Optimization.} 
 The goal of the model is to be as efficient and accurate as possible. 
@@ -311,73 +329,95 @@ If equation \ref{eq:cost} and \ref{eq:loss} are merged and a parameter $\lambda$
 Here the expactation is taken over $x$. 
 Since the gradients of equation \ref{eq:loss2} cannot be calculated, it is approximated with Monte Carlo.
 The gradients can then by calculated as following (see appendix \ref{app:gradients} for the exact derivations):
-% TODO: berekening in appendix
+
 \begin{equation}
     \label{eq:gradient_alpha}
-    \nabla_\alpha F(\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\alpha} \log q_{\alpha}(z|x) f(z, \beta)],
+    \nabla_\alpha F(x, z, \alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\alpha} \log q_{\alpha}(z|x) f(x, z, \beta)],
 \end{equation}
 \begin{equation}
     \label{eq:gradient_beta}
-    \nabla_\beta F(\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f (z, \beta)].
+    \nabla_\beta F(x, z, \alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f (x, z, \beta)].
 \end{equation}
 Where, $f$ and the score function estimator (SFE) $F$ (and its Monte Carlo approximation) are:
 \begin{equation}
     \label{eq:f}
-    f(z, \beta) = \text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z)),
+    f(x, z, \beta) = \text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z)),
 \end{equation}
 \begin{equation}
     \label{eq:F}
-    F (\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [f(z, \beta)],
+    F (\alpha, \beta) = \mathbb{E}_{q_{\alpha}(z|x)} [f(x, z, \beta)],
 \end{equation}
 \begin{equation}
     \label{eq:F_approx}
-    F (\alpha, \beta) \approxtext{M.C.} \frac{1}{M} \sum_i f (z^{(i)}, \beta).
+    F (\alpha, \beta) \approxtext{M.C.} \frac{1}{M} \sum_i f (x, z^{(i)}, \beta).
 \end{equation}
-Here $M$ is the amount of samples drawn from $q_{\alpha}(z|x)$ and $x$ is dropped for clarity.
+Here $M$ is the amount of samples drawn from $q_{\alpha}(z|x)$.
 
-\subsubsection{Hyperparameters}
+\subsection{Hyperparameters}
+\label{sec:hyper}
 During training, the sentences start with a <sos> symbol and end with a <eos> symbol.
-During evaluation of the model, those symbols are removed.
+During testing of the model, those symbols are removed.
 
 The model is implemented using PyTorch \cite{pytorch}.
 After each token is embedded, ReLu is used. During training, dropout is used to prevent overfitting. 
 The hidden dimensions of the LSTM layers are all 300. 
 To optimize the model an Adam optimizer is used with a learning rate of 0.01. 
+The model was trained for 30 epochs.
 
-\subsubsection{Optimizations}
+\subsection{Optimizations}
 To let the model predict better results faster, a few optimizations were done.
 \paragraph{Copy mechanism.} The copy mechanism in the decoder determines if it wants to copy the current token or wants to generate a new token. 
 It therefore calculates the probability of the new word as following:
 \begin{equation}
-    p(w) = (1 - p_{\text{gen}}) \cdot p_{\text{copy}}(w) + p_{\text{gen}} \cdot p_{\text{word}}(\text{w}).
+    p(w) = (1 - p_{\text{gen}}) \cdot p_{\text{copy}}(w) + p_{\text{gen}} \cdot p_{\text{word}}(w).
 \end{equation}
-For the calculation of the probability of the to be copied word, $p_{\text{copy}}$, the global attention mechanism from the decoder is used. 
-To calculate the probability of generating a new word, $p_{\text{gen}}$, the last hidden decoder state, the attention mechanism and the token embedding of the new to generated word are used in a linear layer followed by a sigmoid. 
+For the calculation of the probability of the to be copied word, $p_{\text{copy}}(w)$, the global attention mechanism from the decoder is used. 
+To calculate the probability of generating a new word, $p_{\text{gen}}$, the last hidden decoder state, the attention mechanism and the token embedding of the new to generated word are used in a linear layer followed by a sigmoid.
+$p_{\text{word}}(w)$ is the probability of the to be generated word if a word is being generated. 
 
-\paragraph{Adjusted data.} The model of \citeA{autocomplete} also predicts capital letters and whitespaces. 
-However, for English we can just assume that after every word a space is used. 
-Therefore, the data was adjust to leave out the characters for whitespaces. 
-Something similar is also true for capital letters: usually these only occur at the start of a sentence or in names. 
-It is thus not necessary to also predict capital letters. 
-
-In addition, the train and validation set were adjusted so that the validation set is a subset of the training set. 
-A reason for this was the many unkown tokens in the validation set if this was not done. 
+\paragraph{Adjusted datasets.} The train and test set were adjusted so that the test set is a subset of the training set. 
+A reason for this was the many unkown tokens in the test set if this was not done. 
 \citeA{autocomplete} used the copy mechanism and a dynamic vocabulary for this, but for the task at hand and the amount of data this also works.
 
 \paragraph{Variance reduction.} Because of the use of a SFE the gradient can be more prone to noise \cite{niculae2023discretelatentstructureneural}.
 To solve this problem, its variance can be reduced in a couple of ways. 
 One of those solutions is to sample a second subsentence in the encoder. 
-With this second subsentence, $f'$ can be determined and the loss can be calculated as following:
+With this second subsentence, $f(z')$ can be determined and the loss can be updated as following:
 \begin{equation}
-    \mathbb{E}_{q_w(Z)} [\nabla_w \log q_w(Z) \cdot (f(Z)-f')] + \mathbb{E}_{q_w(Z)} [\nabla_w f(Z)].
+    \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_w \log q_{\alpha}(z|x) \cdot (f(z)-f(z'))] + \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_w f(z)]
 \end{equation}
-Note that the gradient is not changed when subtracting $f'$ from $f(Z)$ since it is a constant which is independent of $w$.
+Where $w$ is a parameter. Note that the gradient is not changed when subtracting $f(z')$ from $f(z)$ since it is a constant which is independent of $w$.
 
 
 \section{Results}
 
 \chapter{Experiment 2 \\ Segmentation Model}
+In the second experiment, the model from chapter \ref{ch:repl} is expanded with a segmentation model. 
+
 \section{Method}
+Another autoencoder model is made in which the encoder uses a segmentation model to choose the sequence of keywords $z$.
+The same data was used as described in section \ref{sec:data}.
+
+\subsection{Score matrix}
+In order for this model to work, it needs a score tensor, $a$.
+This tensor consists of two upper triangle matrices of $m+1 \times m+1$.
+Both matrices represent the score of the segments, one for the segment when it is true, and one for when the segment is false.
+% TODO: How is the tensor constructed?
+
+\subsection{Model description}
+The same model as in section \ref{sec:model} was used. 
+Only the encoder part was adjusted.
+Instead of using an LSTM and a linear layer to score each token, the segmentation model is used.
+% TODO: What does the segmentation model look like exactly?
+
+\subsection{Hyperparameters}
+The same hyperparameters as in section \ref{sec:hyper} were used.
+In addition, for the segmentation model ...
+% TODO: describe parameters of the segmentation model
+
+\subsection{(Optimizations)}
+% (TODO: describe optimizations done for the segmentation model)
+
 \section{Results}
 
 \chapter{Results}
@@ -398,54 +438,44 @@ Using equations \ref{eq:cost} and \ref{eq:loss}, the goal is:
     &= \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha) + \lambda \cdot \text{loss}(x, \alpha, \beta)] \\
     &= \min_{\alpha, \beta} \frac{1}{D} \sum_{x \in D}[\text{cost}(x, \alpha) + \lambda \cdot \text{loss}(x, \alpha, \beta)].
 \end{align*}
+Here $D$ is the set of all target sentences. \\
 
-\noindent $f$ can then be defined as:
+\noindent Then $f$ can be defined as:
 \begin{align*}
-    f(z, \beta) &= \text{cost}(x, \alpha) + \lambda \cdot \text{loss}(x, \alpha, \beta) \\
-    &= \text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z)).
+    f(x, z, \beta) = \text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z)).
 \end{align*}
 
 \noindent And $F$ as:
 \begin{align*}
-    F(\alpha, \beta) &= \mathbb{E}_{q_{\alpha}(z|x)} [[\text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z))]] \\
-    &=^{\ast} \sum_{z\in Z} [q_{\alpha}(z|x) f(z, \beta)] \\
-    &= \mathbb{E}_{q_{\alpha}(z|x)}[f(z, \beta)]
+    F(x, z, \alpha, \beta) &= \mathbb{E}_{q_{\alpha}(z|x)} [[\text{length}(z) + \lambda \cdot (-\log p_{\beta}(x|z))]] \\
+    &=^{\ast} \sum_{z\in Z} [q_{\alpha}(z|x) f(x, z, \beta)] \\
+    &= \mathbb{E}_{q_{\alpha}(z|x)}[f(x, z, \beta)],
 \end{align*}
-where $Z$ consists of all the possible masks of size $x$. In the step marked with *, the following rule is used: $\mathbb{E}_{P(A)}[f(A)] = \sum_{a \in A}P(a)f(a)$. \\
+where $Z$ consists of all the possible masks of size $x$.
+In the step marked with *, the law of the unconscious statistician is used: $\mathbb{E}_{P(A)}[f(A)] = \sum_{a \in A}P(a)f(a)$. \\
 
 \noindent Thus, the goal then becomes:
 \begin{align*}
-    \min_{\alpha, \beta} F(\alpha, \beta).
+    \min_{\alpha, \beta} F(x, z, \alpha, \beta).
 \end{align*}
 
-\noindent Since
+\noindent The gradient with respect to $\alpha$ can be calculated as following:
 \begin{align*}
-    F(\alpha, \beta) \approxtext{M.C.} \frac{1}{M} \sum_i f(z^{i}, \beta)
-\end{align*}
-we also have that:
-\begin{align*}
-    \nabla_{\alpha} F(\alpha, \beta) \approxtext{M.C.} \nabla_{\alpha} \sum_i f(z^{i}, \beta) \\
-    \nabla_{\beta} F(\alpha, \beta) \approxtext{M.C.} \nabla_{\beta} \sum_i f(z^{i}, \beta).
-\end{align*}
-Where M.C. stands for Monte Carlo estimation. \\
-
-\noindent Therefore, we can calculate the gradients with respect to $\alpha$ as following:
-\begin{align*}
-    \nabla_{\alpha} F(\alpha, \beta) &= \nabla_{\alpha} \mathbb{E}_{q_{\alpha}(z|x)} [f(z, \beta)] \\
-    &= \nabla_{\alpha} \sum_z [q_{\alpha}(z|x) f(z, \beta)] \\
-    &= \sum_z \nabla_{\alpha} (q_{\alpha}(z|x) f(z, \beta)) \\
-    &=^\ast \sum_z (q_{\alpha}(z|x) [\nabla_{\alpha} \log q_{\alpha}(z|x) f(z, \beta)]) \\
-    &= \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\alpha} \log q_{\alpha}(z|x) f(z, \beta)].
+    \nabla_{\alpha} F(x, z, \alpha, \beta) &= \nabla_{\alpha} \mathbb{E}_{q_{\alpha}(z|x)} [f(x, z, \beta)] \\
+    &= \nabla_{\alpha} \sum_z [q_{\alpha}(z|x) f(x, z, \beta)] \\
+    &= \sum_z \nabla_{\alpha} (q_{\alpha}(z|x) f(x, z, \beta)) \\
+    &=^\ast \sum_z (q_{\alpha}(z|x) [\nabla_{\alpha} \log q_{\alpha}(z|x) f(x, z, \beta)]) \\
+    &= \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\alpha} \log q_{\alpha}(z|x) f(x, z, \beta)].
 \end{align*}
 In the step marked with *, a log-derivative trick is used: $\nabla_t \log h(t) = \frac{\nabla_t h(t)}{h(t)}$. \\
 
 \noindent And the gradient with respect to $\beta$:
 \begin{align*}
-    \nabla_{\beta} F(\alpha, \beta) &= \nabla_{\beta} \mathbb{E}_{q_{\alpha}(z|x)}[f(z, \beta)] \\
-    &= \nabla_{\beta} \sum_z [q_{\alpha}(z|x)f(z, \beta)] \\
-    &= \sum_z \nabla_{\beta} (q_{\alpha}(z|x)f(z, \beta)) \\
-    &= \sum_z (q_{\alpha}(z|x) [\nabla_{\beta} f(z, \beta)]) \\
-    &= \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f(z, \beta)].
+    \nabla_{\beta} F(x, z, \alpha, \beta) &= \nabla_{\beta} \mathbb{E}_{q_{\alpha}(z|x)}[f(x, z, \beta)] \\
+    &= \nabla_{\beta} \sum_z [q_{\alpha}(z|x)f(x, z, \beta)] \\
+    &= \sum_z \nabla_{\beta} (q_{\alpha}(z|x)f(x, z, \beta)) \\
+    &= \sum_z (q_{\alpha}(z|x) [\nabla_{\beta} f(x, z, \beta)]) \\
+    &= \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_{\beta} f(x, z, \beta)].
 \end{align*}
 
 \end{document}
