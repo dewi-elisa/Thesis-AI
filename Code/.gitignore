@@ -1,5 +1,8 @@
 models/
 *.ipynb
+test.py
+figs/
+examples*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
