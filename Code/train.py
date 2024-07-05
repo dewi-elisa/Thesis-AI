@@ -191,7 +191,11 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, op
 
             if opt.examples:
                 # Write examples to file
-                with open('examples_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.txt', 'a') as f:
+                if opt.segmentation:
+                    file_name = 'examples_structured_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.txt'
+                else:
+                    file_name = 'examples_unstructured_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.txt'
+                with open(file_name, 'a') as f:
                     f.write('Epoch: ' + str(epoch+1) + '\n')
                     for batch_index, batch in enumerate([next(iter(train_ae_loader))]):
                         src_seqs, trg_seqs, src_lines, trg_lines = batch
@@ -210,7 +214,11 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, op
                     f.write('\n')
 
     if opt.plot:
-        np.savez('models/results_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.npz',
+        if opt.segmentation:
+            file_name = 'models/results_structured_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.npz'
+        else:
+            file_name = 'models/results_unstructured_' + str(opt.linear_weight) + '_' + str(opt.epochs) + '.npz'
+        np.savez(file_name,
                  efficiencies_train=np.array(efficiencies_train),
                  efficiencies_val=np.array(efficiencies_val),
                  losses_train=np.array(losses_train),
