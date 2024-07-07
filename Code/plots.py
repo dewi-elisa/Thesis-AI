@@ -12,17 +12,17 @@ import os
 
 
 def recon_loss_plot(opt, recon_loss, n_epochs, parameters):
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'tab:pink']
     x = np.linspace(1, n_epochs, n_epochs)
     plt.figure()
 
     for i, parameter in enumerate(parameters):
         (recon_loss_training, recon_loss_val) = recon_loss[i]
         plt.plot(x, recon_loss_training,
-                 label='training_' + str(parameter),
+                 label='train_' + str(parameter),
                  linestyle='-', color=colors[i])
         plt.plot(x, recon_loss_val,
-                 label='validation_' + str(parameter),
+                 label='val_' + str(parameter),
                  linestyle=':', color=colors[i])
 
     plt.xlabel('Epoch')
@@ -32,7 +32,7 @@ def recon_loss_plot(opt, recon_loss, n_epochs, parameters):
 
 
 def cost_plot(opt, cost, n_epochs, parameters):
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'tab:pink']
     x = np.linspace(1, n_epochs, n_epochs)
     plt.figure()
 
@@ -52,7 +52,7 @@ def cost_plot(opt, cost, n_epochs, parameters):
 
 
 def training_obj_plot(opt, obj, n_epochs, parameters):
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'tab:pink']
     x = np.linspace(1, n_epochs, n_epochs)
     plt.figure()
 
@@ -90,8 +90,8 @@ def acc_vs_cost_plot(accuracy, cost, parameters):
 
     for i, parameter in enumerate(parameters):
         text = '$\lambda$ = ' + str(parameter)
-        plt.text(costs_train[i]+1, accuracies_train[i]-.5, text)
-        plt.text(costs_val[i]+1, accuracies_val[i]-.5, text)
+        plt.text(costs_train[i], accuracies_train[i], text)
+        plt.text(costs_val[i], accuracies_val[i], text)
 
     plt.xlabel('Kept (%)')
     plt.ylabel('Greedy accuracy (%)')
@@ -99,21 +99,7 @@ def acc_vs_cost_plot(accuracy, cost, parameters):
     plt.savefig('figs/acc_cost.png')
 
 
-if __name__ == "__main__":
-    parser = configargparse.ArgumentParser(description="train.py")
-
-    opts.basic_opts(parser)
-    opts.train_opts(parser)
-    opts.model_opts(parser)
-    opts.eval_opts(parser)
-
-    opt = parser.parse_args()
-    exp = utils.name_exp(opt)
-    device = utils.init_device()
-
-    utils.init_seed(opt.seed)
-    opt.linear_weight = 4.3
-
+def train_models(opt, parameters, device):
     # Tokenizer
     tokenizer = data.build_tokenizer(opt)
 
@@ -123,8 +109,6 @@ if __name__ == "__main__":
     # Data Loaders
     loaders = data.build_loaders(opt, tokenizer, word2id)
 
-    parameters = np.linspace(4, 5, 6).tolist()
-    print(parameters)
     efficiencies, losses, accuracies, recon_losses = [], [], [], []
 
     for parameter in parameters:
@@ -154,13 +138,54 @@ if __name__ == "__main__":
         print('Saving model...')
         utils.save_model(opt, encoder, decoder, opt.epochs)
 
+        return efficiencies, losses, accuracies, recon_losses
+
+
+def load_data(file):
+    results = np.load(file)
+    parameters = [0.5]
+    n_epochs = 10
+
+    efficiencies = [(results['efficiencies_train'], results['efficiencies_train'])]
+    losses = [(results['losses_train'], results['losses_val'])]
+    accuracies = [(results['accuracies_train'], results['accuracies_val'])]
+    recon_losses = [(results['recon_losses_train'], results['recon_losses_val'])]
+
+    return efficiencies, losses, accuracies, recon_losses, parameters, n_epochs
+
+
+if __name__ == "__main__":
+    parser = configargparse.ArgumentParser(description="train.py")
+
+    opts.basic_opts(parser)
+    opts.train_opts(parser)
+    opts.model_opts(parser)
+    opts.eval_opts(parser)
+
+    opt = parser.parse_args()
+    exp = utils.name_exp(opt)
+    device = utils.init_device()
+
+    utils.init_seed(opt.seed)
+    opt.linear_weight = 4.3
+
+    parameters = np.linspace(4, 5, 6).tolist()
+    print(parameters)
+
+    file = 'models/results_0.5_10.npz'
+    if file is None:
+        efficiencies, losses, accuracies, recon_losses = train_models(opt, parameters, device)
+        n_epochs = opt.epochs
+    else:
+        efficiencies, losses, accuracies, recon_losses, parameters, n_epochs = load_data(file)
+
     print()
     print('Making the plots...')
 
     if not os.path.exists("figs/"):
         os.mkdir("figs")
 
-    recon_loss_plot(opt, recon_losses, opt.epochs, parameters)
-    cost_plot(opt, efficiencies, opt.epochs, parameters)
-    training_obj_plot(opt, losses, opt.epochs, parameters)
+    recon_loss_plot(opt, recon_losses, n_epochs, parameters)
+    cost_plot(opt, efficiencies, n_epochs, parameters)
+    training_obj_plot(opt, losses, n_epochs, parameters)
     acc_vs_cost_plot(accuracies, efficiencies, parameters)

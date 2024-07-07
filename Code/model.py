@@ -8,17 +8,16 @@ import torch.nn.functional as F
 import data
 import utils
 import opts
-# import segmentation
+import dynamic_programming as dp
 
 
 class Encoder(nn.Module):
-    def __init__(self, opt, word2id, id2word, device, a=None):
+    def __init__(self, opt, word2id, id2word, device):
         super(Encoder, self).__init__()
         self.device = device
         self.word2id = word2id
         self.id2word = id2word
         self.opt = opt
-        self.a = a
         self.num_tokens = len(word2id)
         self.embedding_dim = opt.embedding_dim
 
@@ -28,6 +27,7 @@ class Encoder(nn.Module):
         self.encoder = nn.LSTM(input_size=self.embedding_dim,
                                hidden_size=self.embedding_dim,
                                batch_first=True)
+        self.w = nn.Parameter(torch.zeros(self.embedding_dim, self.embedding_dim))
         self.linear = nn.Linear(in_features=self.embedding_dim,
                                 out_features=1,
                                 bias=True)
@@ -42,11 +42,21 @@ class Encoder(nn.Module):
         embedded = F.relu(F.dropout(embedded, p=0.1))  # why relu? -> try also without relu
 
         # Score each token
+        encoder_outputs, _ = self.encoder(embedded)
+
         if self.opt.segmentation:
             prob_tokens = None
-            # prob_tokens = segmentation.forward_alg(self.a)
+            a = self.score_a(encoder_outputs)
+
+            segmentation = dp.sampling(a)
+            segmentation2 = dp.sampling(a)
+
+            mask = self.segmentation2mask(segmentation)
+            mask2 = self.segmentation2mask(segmentation2)
+
+            log_prob_mask = dp.score_segmentation(a, segmentation) - dp.logsumexp(a)
+
         else:
-            encoder_outputs, _ = self.encoder(embedded)
             scores = self.linear(encoder_outputs).squeeze(1)
 
             # print("scores:")
@@ -67,12 +77,16 @@ class Encoder(nn.Module):
             # Apply sigmoid
             prob_tokens = torch.sigmoid(masked_scores)
 
-        # Sample a mask with Bernoulli
-        mask = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
-        mask2 = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
+            # Sample a mask with Bernoulli
+            mask = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
+            mask2 = torch.distributions.bernoulli.Bernoulli(prob_tokens).sample().to(torch.bool)
 
-        # print("mask:")
-        # print(mask)
+            # print("mask:")
+            # print(mask)
+
+            # Calculate the log probability of the mask
+            log_prob_mask = torch.sum(mask * torch.log(prob_tokens)
+                                      + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
 
         # Apply the mask
         subsentence = tokens[mask]
@@ -83,11 +97,24 @@ class Encoder(nn.Module):
         # print([self.id2word[word.item()] for word in subsentence])
         # print()
 
-        # Calculate the log probability of the mask
-        log_prob_mask = torch.sum(mask * torch.log(prob_tokens)
-                                  + (mask.bitwise_not()) * torch.log(1 - prob_tokens))
-
         return subsentence, log_prob_mask, subsentence2
+
+    def score_a(self, H):
+        seq_len, hidden_dim = H.shape
+        H = torch.cat((torch.zeros(1, hidden_dim), H))
+        a = torch.zeros(seq_len + 1, seq_len + 1, 2)
+        a[:, :, 1] = H @ self.w @ H.T
+
+        return a
+
+    def segmentation2mask(self, segmentation):
+        mask = torch.tensor([], dtype=torch.long)
+
+        for start, end, keep in segmentation:
+            n = end - start
+            mask = torch.cat((mask, torch.tensor(n * [keep])))
+
+        return mask.to(torch.bool)
 
 
 class Decoder(nn.Module):

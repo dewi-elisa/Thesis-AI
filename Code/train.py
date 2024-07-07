@@ -140,7 +140,7 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, op
 
                 # Evaluation
                 if epoch % opt.save_every == 0:
-                    utils.save_model(opt, encoder, decoder, epoch, False)
+                    utils.save_model(opt, encoder, decoder, epoch)
                     eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
                                   train_ae_loader)
                     eval.evaluate(opt, device, encoder, decoder, word2id, id2word,

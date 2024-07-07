@@ -66,8 +66,8 @@ def init_writer(opt, exp):
     return writer
 
 
-def save_model(opt, encoder, decoder, epoch, structured=False):
-    if structured is True:
+def save_model(opt, encoder, decoder, epoch):
+    if opt.segmentation:
         structured = 'structured'
     else:
         structured = 'unstructured'
