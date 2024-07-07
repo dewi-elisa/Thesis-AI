@@ -237,6 +237,36 @@ def logsumexp(a: torch.Tensor):
     return q[-1]
 
 
+def sampling(a: torch.Tensor):
+    _, seq_len_plus_1, _ = a.shape
+
+    q = torch.zeros(seq_len_plus_1)
+
+    for i in range(1, seq_len_plus_1):
+        x = torch.tensor([])
+        for j in range(i):
+            x = torch.cat((q[j] + a[j, i, :], x))
+        q[i] = torch.logsumexp(x, dim=0)
+
+    sample = torch.tensor([], dtype=torch.long)
+    i = seq_len_plus_1 - 1
+    while i > 0:
+        p = torch.tensor([])
+        segments_idx = torch.tensor([], dtype=torch.long)
+        for j in range(i):
+            p_j = a[j, i, :] + q[j] - q[i]
+            p = torch.cat((p, p_j))
+            segment = torch.tensor([[j, i, 0], [j, i, 1]])
+            segments_idx = torch.cat((segments_idx, segment))
+        p = torch.exp(p)
+        j_idx = torch.multinomial(p, 1)
+        segment = segments_idx[j_idx]
+        sample = torch.cat((segment, sample))
+        i = segment[0][0]
+
+    return sample
+
+
 if __name__ == '__main__':
     a = torch.tensor([[[0, 0], [10, 5], [6, 9]],
                       [[0, 0], [0, 0], [7, 8]],
@@ -249,3 +279,6 @@ if __name__ == '__main__':
     print()
     print(logsumexp_brute_force(a))
     print(logsumexp(a))
+
+    print()
+    print(sampling(a))
