@@ -448,7 +448,7 @@ def build_vocab(opt, exp, tokenizer, use_existing=False):
         # Collect lines from corpus
         path = os.path.join(path_data, "train_lines.txt")
         lines = load_data(path, check_validity=True)
-        lines = lines[:opt.num_examples]
+        # lines = lines[:opt.num_examples]
 
         vocab = list()
         print("[Vocab] Processing {} lines of code...".format(len(lines)))
