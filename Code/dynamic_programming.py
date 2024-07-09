@@ -18,7 +18,7 @@ def valid_segmentation(a, segmentation):
     bool
         True if the segmentation is valid, False otherwise.
     """
-    _, seq_len_plus_1, _ = a.shape
+    seq_len_plus_1, _, _ = a.shape
 
     # check if the first segmentation starts at 0
     if segmentation[0][0] != 0:
@@ -115,7 +115,7 @@ def argmax_brute_force(a: torch.Tensor):
     y: torch.Tensor (dtype=long), shape [seq_len]
         The highest-scoring segmentation.
     """
-    _, seq_len_plus_1, _ = a.shape
+    seq_len_plus_1, _, _ = a.shape
 
     segmentations = generate_all_segmentations(seq_len_plus_1)
 
@@ -150,7 +150,7 @@ def argmax(a: torch.Tensor):
     y: torch.Tensor (dtype=long), shape [seq_len]
         The highest-scoring segmentation.
     """
-    _, seq_len_plus_1, _ = a.shape
+    seq_len_plus_1, _, _ = a.shape
 
     a_keep = torch.ge(a[:, :, 1], a[:, :, 0]).int()
     a_score = torch.amax(a, 2)
@@ -200,7 +200,7 @@ def logsumexp_brute_force(a: torch.Tensor):
     log_normalizer: scalar,
         The log sum exp of the score of every possible segmentation.
     """
-    _, seq_len_plus_1, _ = a.shape
+    seq_len_plus_1, _, _ = a.shape
 
     segmentations = generate_all_segmentations(seq_len_plus_1)
 
@@ -224,7 +224,7 @@ def logsumexp(a: torch.Tensor):
     log_normalizer: scalar,
         The log sum exp of the score of every possible segmentation.
     """
-    _, seq_len_plus_1, _ = a.shape
+    seq_len_plus_1, _, _ = a.shape
 
     q = torch.zeros(seq_len_plus_1)
 
@@ -238,7 +238,7 @@ def logsumexp(a: torch.Tensor):
 
 
 def sampling(a: torch.Tensor):
-    _, seq_len_plus_1, _ = a.shape
+    seq_len_plus_1, _, _ = a.shape
 
     q = torch.zeros(seq_len_plus_1)
 

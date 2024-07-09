@@ -1,30 +1,15 @@
-# import re
 import os
-# import copy
-# import math
-# import pickle
-# import datetime
-# import itertools
-# import collections
 import configargparse
 import numpy as np
-# from tqdm import tqdm
-# from colorama import Fore, Style
-
 import torch
+import torch.optim as optim
+import matplotlib.pyplot as plt
 
 import opts
 import utils
 import data
 import model
 import train
-# from utils import cprint
-# from result import Result
-
-import torch.optim as optim
-import matplotlib.pyplot as plt
-# from scipy.optimize import curve_fit
-# from scipy.interpolate import interp1d
 
 
 def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
@@ -62,14 +47,6 @@ def eval_batch(opt, device, encoder, decoder, word2id, id2word, batch):
         src_seqs = src_seqs[1:-1]
 
         # Calculate metrics
-        # print(src_lines)
-        # print(subsentence_lines)
-        # print(sentence_lines)
-        # print(src_seqs.tolist())
-        # print(subsentence)
-        # print(trg_seqs)
-        # print()
-        # print(sentence)
         efficiency = (len(subsentence) / len(src_seqs.tolist())) * 100
         recon_loss = - log_prob_sentence.item()
         accuracy = (src_seqs.tolist() == sentence)
@@ -126,7 +103,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
         model_name = structured + '_' + str(parameter) + '_' + str(opt.epochs) + '.pth'
         opt.linear_weight = parameter
 
-        # If model is available, get data
+        # If model is available, get data, otherwise, train model
         if os.path.exists('models/' + model_name):
             print()
             print('Loading model ' + model_name + '...')
@@ -135,34 +112,10 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             print('Evaluating the model...')
             encoder.eval()
             decoder.eval()
-            # There is no test set, so val for now...
+
             _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
                                                      word2id, id2word,
                                                      train_ae_loader, parameter)
-            efficiencies.append(efficiency)
-            accuracies.append(accuracy)
-        elif os.path.exists('models/lr_0.01/' + structured + '_' + str(parameter) + '_' + str(10) + '.pth'):
-            print()
-            print('Loading model ' + model_name + '...')
-            encoder = model.Encoder(opt, word2id, id2word, device).to(device)
-            decoder = model.Decoder(opt, word2id, id2word, device).to(device)
-            utils.load_model('lr_0.01/' + structured + '_' + str(parameter) + '_' + str(10) + '.pth', encoder, decoder)
-            optimizer = optim.Adam(list(encoder.parameters()) + list(decoder.parameters()),
-                                   lr=opt.learning_rate)
-
-            print('Training it now...')
-            train.train(opt, device, encoder, decoder, word2id, id2word, optimizer, loaders)
-
-            print('Saving it...')
-            utils.save_model(encoder, decoder, parameter, opt.epochs+10)
-
-            print('Evaluating the model...')
-            encoder.eval()
-            decoder.eval()
-            # There is no test set, so val for now...
-            _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
-                                                     word2id, id2word,
-                                                     val_ae_loader)
             efficiencies.append(efficiency)
             accuracies.append(accuracy)
         else:
@@ -182,7 +135,7 @@ def get_figure_data(opt, device, encoder, decoder, word2id, id2word, optimizer, 
             print('Evaluating the model...')
             encoder.eval()
             decoder.eval()
-            # There is no test set, so val for now...
+
             _, efficiency, _, accuracy, _ = evaluate(opt, device, encoder, decoder,
                                                      word2id, id2word,
                                                      val_ae_loader)
@@ -227,10 +180,6 @@ if __name__ == "__main__":
                                                        encoder, decoder,
                                                        word2id, id2word,
                                                        optimizer, loaders)
-
-    # parameters = [4, 4.2, 4.4, 4.6, 4.8]
-    # efficiency = [15, 20, 30, 40, 45]
-    # accuracy = [0, 3, 10, 15, 18, 23]
 
     plt.figure()
     print(efficiency)

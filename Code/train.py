@@ -22,7 +22,8 @@ def calculate_loss(opt, subsentence, log_q_alpha, log_p_beta, subsentence2, log_
     return log_q_alpha * (f.detach() - f2.detach()) + f, f.detach()
 
 
-def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, optimizer_decoder, batch):
+def train_batch(opt, device, encoder, decoder, word2id, id2word,
+                optimizer_encoder, optimizer_decoder, batch):
     encoder.train()
     decoder.train()
 
@@ -33,18 +34,11 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer_encod
     # Add <sos> to src_seqs
     src_seqs = torch.cat((torch.tensor([word2id['<sos>']]).to(device), src_seqs))
 
-    # max_src_len = src_seqs.size()
-
     """
     Encode and decode
     """
     # Encode
     subsentence, log_prob_mask, subsentence2 = encoder(src_seqs)
-
-    # Process keywords
-    # key_seqs, key_lines = decoder.postprocess(key_seqs=None,
-    #                                           key_mask=mask,
-    #                                           encoded_lines=src_lines)
 
     # Decode
     sentence, log_prob_sentence = decoder(subsentence, trg_seqs)
@@ -53,10 +47,6 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer_encod
     """
     Stats
     """
-    # Use unprocessed key_seqs for rewards and stats
-    # num_key_tokens = torch.sum(key_seqs.gt(0), dim=1).float()
-
-    # NOTE we count whitespace here for accurate rewards here
     num_src_tokens = torch.sum(src_seqs.gt(0), dim=0).float()
     num_key_tokens_from_encoder = float(subsentence.size(dim=0))
 
@@ -68,7 +58,7 @@ def train_batch(opt, device, encoder, decoder, word2id, id2word, optimizer_encod
     loss, actual_loss = calculate_loss(opt, subsentence, log_prob_mask, log_prob_sentence,
                                        subsentence2, log_prob_sentence2)
     loss.backward()
-    # torch.nn.utils.clip_grad_norm_(decoder.parameters(), opt.clip)
+
     optimizer_encoder.step()
     optimizer_decoder.step()
 
@@ -109,7 +99,8 @@ def print_examples(device, encoder, decoder, word2id, id2word, f, src_seqs, trg_
         f.write('\nlog probability: ' + str(log_prob_sentence.item()) + '\n\n')
 
 
-def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, optimizer_decoder, loaders):
+def train(opt, device, encoder, decoder, word2id, id2word,
+          optimizer_encoder, optimizer_decoder, loaders):
     print("\n[Train] Training for {} epochs.".format(opt.epochs))
 
     (train_ae_loader, train_key_loader,
@@ -145,8 +136,6 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, op
                                   train_ae_loader)
                     eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
                                   val_ae_loader)
-                    # eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
-                    #               test_ae_loader)
                 else:
                     if epoch % opt.train_every == 0:
                         eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
@@ -155,10 +144,6 @@ def train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, op
                     if epoch % opt.val_every == 0:
                         eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
                                       val_ae_loader)
-
-                    # if epoch % opt.test_every == 0:
-                        # eval.evaluate(opt, device, encoder, decoder, word2id, id2word,
-                        #               test_ae_loader)
                 if opt.plot:
                     _, efficiency, loss, accuracy, recon_loss = eval.evaluate(opt, device,
                                                                               encoder, decoder,
@@ -261,7 +246,8 @@ def main(opt, exp, device):
     optimizer_decoder = optim.Adam(decoder.parameters(), lr=opt.learning_rate_decoder)
 
     # Train
-    train(opt, device, encoder, decoder, word2id, id2word, optimizer_encoder, optimizer_decoder, loaders)
+    train(opt, device, encoder, decoder, word2id, id2word,
+          optimizer_encoder, optimizer_decoder, loaders)
 
     # Save model
     utils.save_model(opt, encoder, decoder, opt.epochs)
