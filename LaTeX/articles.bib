@@ -98,3 +98,116 @@ year = {2019},
 publisher = {Curran Associates, Inc.},
 url = {http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf}
 }
+
+@article{RennieStevenJ2017SSTf,
+abstract = {Recently it has been shown that policy-gradient methods for reinforcement
+learning can be utilized to train deep end-to-end systems directly on
+non-differentiable metrics for the task at hand. In this paper we consider the
+problem of optimizing image captioning systems using reinforcement learning,
+and show that by carefully optimizing our systems using the test metrics of the
+MSCOCO task, significant gains in performance can be realized. Our systems are
+built using a new optimization approach that we call self-critical sequence
+training (SCST). SCST is a form of the popular REINFORCE algorithm that, rather
+than estimating a "baseline" to normalize the rewards and reduce variance,
+utilizes the output of its own test-time inference algorithm to normalize the
+rewards it experiences. Using this approach, estimating the reward signal (as
+actor-critic methods must do) and estimating normalization (as REINFORCE
+algorithms typically do) is avoided, while at the same time harmonizing the
+model with respect to its test-time inference procedure. Empirically we find
+that directly optimizing the CIDEr metric with SCST and greedy decoding at
+test-time is highly effective. Our results on the MSCOCO evaluation sever
+establish a new state-of-the-art on the task, improving the best result in
+terms of CIDEr from 104.9 to 114.7.},
+author = {Rennie, Steven J and Marcheret, Etienne and Mroueh, Youssef and Ross, Jarret and Goel, Vaibhava},
+copyright = {http://arxiv.org/licenses/nonexclusive-distrib/1.0},
+keywords = {Computer Science - Artificial Intelligence ; Computer Science - Computer Vision and Pattern Recognition ; Computer Science - Learning},
+language = {eng},
+title = {Self-critical Sequence Training for Image Captioning},
+year = {2017},
+}
+
+@article{copyMechanism,
+  author       = {Jiatao Gu and
+                  Zhengdong Lu and
+                  Hang Li and
+                  Victor O. K. Li},
+  title        = {Incorporating Copying Mechanism in Sequence-to-Sequence Learning},
+  journal      = {CoRR},
+  volume       = {abs/1603.06393},
+  year         = {2016},
+  url          = {http://arxiv.org/abs/1603.06393},
+  eprinttype    = {arXiv},
+  eprint       = {1603.06393},
+  timestamp    = {Mon, 13 Aug 2018 16:47:52 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/GuLLL16.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{LuongAttention,
+  author       = {Minh{-}Thang Luong and
+                  Hieu Pham and
+                  Christopher D. Manning},
+  title        = {Effective Approaches to Attention-based Neural Machine Translation},
+  journal      = {CoRR},
+  volume       = {abs/1508.04025},
+  year         = {2015},
+  url          = {http://arxiv.org/abs/1508.04025},
+  eprinttype    = {arXiv},
+  eprint       = {1508.04025},
+  timestamp    = {Mon, 13 Aug 2018 16:46:14 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/LuongPM15.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@misc{bahdanau2016neuralmachinetranslationjointly,
+      title={Neural Machine Translation by Jointly Learning to Align and Translate}, 
+      author={Dzmitry Bahdanau and Kyunghyun Cho and Yoshua Bengio},
+      year={2016},
+      eprint={1409.0473},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/1409.0473}, 
+}
+
+@article{LSTM,
+abstract = {Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We briefly review Hochreiter's (1991) analysis of this problem, then address it by introducing a novel, efficient, gradient based method called long short-term memory (LSTM). Truncating the gradient where this does not do harm, LSTM can learn to bridge minimal time lags in excess of 1000 discrete-time steps by enforcing constant error flow through constant error carousels within special units. Multiplicative gate units learn to open and close access to the constant error flow. LSTM is local in space and time; its computational complexity per time step and weight is
+. 1. Our experiments with artificial data involve local, distributed, real-valued, and noisy pattern representations. In comparisons with real-time recurrent learning, back propagation through time, recurrent cascade correlation, Elman nets, and neural sequence chunking, LSTM leads to many more successful runs, and learns much faster. LSTM also solves complex, artificial long-time-lag tasks that have never been solved by previous recurrent network algorithms.},
+author = {Hochreiter, Sepp and Schmidhuber, Jürgen},
+address = {One Rogers Street, Cambridge, MA 02142-1209, USA},
+copyright = {1997 INIST-CNRS},
+issn = {0899-7667},
+journal = {Neural computation},
+keywords = {Algorithmics. Computability. Computer arithmetics ; Algorithms ; Applied sciences ; Artificial intelligence ; Computer science; control theory; systems ; Connectionism. Neural networks ; Exact sciences and technology ; Learning ; Memory ; Memory Short-Term ; Models Neurological ; Models Psychological ; Nerve Net - physiology ; Neural Networks (Computer) ; Theoretical computing ; Time Factors},
+language = {eng},
+number = {8},
+pages = {1735-1780},
+publisher = {MIT Press},
+title = {Long Short-Term Memory},
+volume = {9},
+year = {1997},
+}
+
+@misc{adam,
+      title={Adam: A Method for Stochastic Optimization}, 
+      author={Diederik P. Kingma and Jimmy Ba},
+      year={2017},
+      eprint={1412.6980},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/1412.6980}, 
+}
+
+@book{FFBS,
+abstract = {"This textbook offers a comprehensive and self-contained introduction to the field of machine learning, based on a unified, probabilistic approach. The coverage combines breadth and depth, offering necessary background material on such topics as probability, optimization, and linear algebra as well as discussion of recent developments in the field, including conditional random fields, L1 regularization, and deep learning. The book is written in an informal, accessible style, complete with pseudo-code for the most important algorithms. All topics are copiously illustrated with color images and worked examples drawn from such application domains as biology, text processing, computer vision, and robotics. Rather than providing a cookbook of different heuristic methods, the book stresses a principled model-based approach, often using the language of graphical models to specify models in a concise and intuitive way. Almost all the models described have been implemented in a MATLAB software package--PMTK (probabilistic modeling toolkit)--that is freely available online"--Back cover.},
+author = {Murphy, Kevin P.},
+address = {Cambridge, Massachusetts},
+booktitle = {Machine learning : a probabilistic perspective},
+isbn = {9780262018029},
+keywords = {Apprentissage automatique},
+language = {eng},
+lccn = {2012004558},
+publisher = {MIT Press},
+series = {Adaptive computation and machine learning series},
+title = {Machine learning : a probabilistic perspective },
+year = {2012},
+}
