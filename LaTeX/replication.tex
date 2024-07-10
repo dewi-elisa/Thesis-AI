@@ -1,4 +1,4 @@
-In the first experiment the autoencoder model from \citeA{autocomplete} was replicated. 
+In the first experiment the autoencoder model from \shortciteA{autocomplete} was replicated. 
 
 \section{Method}
 To replicate the model, an encoder-decoder model was made. The encoder chooses which words to keep as keywords, and the decoder tries to retrieve the full sentence of the keywords. 
@@ -7,13 +7,13 @@ To replicate the model, an encoder-decoder model was made. The encoder chooses w
 \label{sec:data}
 % TODO: make a table with a few example sentences
 % TODO: descirbe train, validation and test set
-The same data was used as in \citeA{autocomplete}.
-The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \cite{data}.
+The same data was used as in \shortciteA{autocomplete}.
+The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \shortcite{data}.
 Another 50K sentences were used to evaluate the model. 
 The sentences had at most 16 tokens. 
-The reviews were segmented into sentences following the same procedure as in \citeA{GuuKelvin2018GSbE}. 
+The reviews were segmented into sentences following the same procedure as in \shortciteA{GuuKelvin2018GSbE}. 
 
-The model of \citeA{autocomplete} also predicts capital letters and whitespaces. 
+The model of \shortciteA{autocomplete} also predicts capital letters and whitespaces. 
 However, for English we can just assume that after every word a space is used. 
 Therefore, the data was adjusted to leave out the characters for whitespaces. 
 Something similar is also true for capital letters: usually these only occur at the start of a sentence or in names. 
@@ -34,7 +34,7 @@ The better the autoencoder works, the more likely it is that $x$ and $y$ are equ
 \label{sec:model}
 % TODO: add diagram?
 \paragraph{Encoder.} 
-The encoder embeds the tokens and uses a uni-directional LSTM \cite{LSTM} to score the tokens.
+The encoder embeds the tokens and uses a uni-directional LSTM \shortcite{LSTM} to score the tokens.
 An additional linear layer followed by sigmoid function is used to determine the probability of keeping each token. 
 From these probabilities, a mask is sampled from a Bernoulli distribution. 
 Finally, the sequence of kept tokens and the log probability of the mask are returned.
@@ -47,7 +47,7 @@ It then encodes the embedding using a bi-directional LSTM.
 The decoder decodes the full sentence. 
 It therefore embeds the already decoded sequence (or just the <sos> symbol if there is none) into a 32-dimensional vector and concatenates the last hidden state of the encoder* to it. 
 This embedding is the input for another uni-directional LSTM. 
-Finally, the probability of the next word is calculated using global attention \cite{LuongAttention, bahdanau2016neuralmachinetranslationjointly} and the full sentence and its log probability are returned. 
+Finally, the probability of the next word is calculated using global attention \shortcite{LuongAttention, bahdanau2016neuralmachinetranslationjointly} and the full sentence and its log probability are returned. 
 
 During training, the decoder is given the keywords and at every step the model takes the correct word from the target sequence and calculates the probability of that sequence.
 During evaluation, however, the decoder uses a greedy decoding strategy and thus takes the word with the highest probability as the next word. 
@@ -92,17 +92,17 @@ Here $M$ is the amount of samples drawn from $q_{\alpha}(z|x)$.
 During training, the sentences start with a <sos> symbol and end with a <eos> symbol.
 During evaluation of the model, those symbols are removed.
 
-The model is implemented using PyTorch \cite{pytorch}.
+The model is implemented using PyTorch \shortcite{pytorch}.
 After each token is embedded, ReLu is used. During training, dropout is used to prevent overfitting. 
 The hidden dimensions of the LSTM layers are all 32. 
-To optimize the model an Adam optimizer \cite{adam} is used with a learning rate of 0.01. 
+To optimize the model an Adam optimizer \shortcite{adam} is used with a learning rate of 0.01. 
 Multiple models were trained for 10 epochs with different values for $\lambda$.
 
 \subsection{Optimizations}
 \label{sec:optimizations}
 To let the model predict better results faster, a few optimizations were done.
 
-\paragraph{Copy mechanism.} The copy mechanism \cite{copyMechanism} in the decoder determines if it wants to copy the current token or wants to generate a new token. 
+\paragraph{Copy mechanism.} The copy mechanism \shortcite{copyMechanism} in the decoder determines if it wants to copy the current token or wants to generate a new token. 
 It therefore calculates the probability of the new word as following:
 \begin{equation}
     p(w) = (1 - p_{\text{gen}}) \cdot p_{\text{copy}}(w) + p_{\text{gen}} \cdot p_{\text{word}}(w).
@@ -115,11 +115,11 @@ $p_{\text{word}}(w)$ is the probability of the to be generated word if a word is
 During the evaluation of the model, a lot of unknown tokens were encountered.
 This was due to words that were not present in the training set but were in the validation set. 
 To solve this problem, the vocobulary was made using the whole dataset, instead of just the training set. 
-\citeA{autocomplete} used the copy mechanism and a dynamic vocabulary for this, but for the task at hand and the amount of data this also works.
+\shortciteA{autocomplete} used the copy mechanism and a dynamic vocabulary for this, but for the task at hand and the amount of data this also works.
 
-\paragraph{Variance reduction.} Because of the use of a SFE the gradient can be more prone to noise \cite{niculae2023discretelatentstructureneural}.
+\paragraph{Variance reduction.} Because of the use of a SFE the gradient can be more prone to noise \shortcite{niculae2023discretelatentstructureneural}.
 To solve this problem, its variance can be reduced in a couple of ways. 
-One of those solutions is to sample a second subsentence in the encoder \cite{RennieStevenJ2017SSTf}. 
+One of those solutions is to sample a second subsentence in the encoder \shortcite{RennieStevenJ2017SSTf}. 
 With this second subsentence, $f(z')$ can be determined and the loss can be updated as following:
 \begin{equation}
     \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_w \log q_{\alpha}(z|x) \cdot (f(x, z, \beta)-f(x, z', \beta))] + \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_w f(x, z, \beta)],

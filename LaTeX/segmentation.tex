@@ -5,25 +5,25 @@ An autoencoder model is made in which the encoder uses a segmentation model to c
 The same data was used as described in section \ref{sec:data}.
 
 \subsection{Score matrix}
-In order for this model to work, it needs a score tensor, $a$.
-This tensor consists of two upper triangle matrices of $m+1 \times m+1$, called $a_0$ and $a_1$.
+In order for this model to work, it needs a score tensor, $\boldsymbol{A}$.
+This tensor consists of two upper triangle matrices of $(m+1) \times (m+1)$, called $A_0$ and $A_1$.
 Both matrices represent the score of segments in the DAG made for each sentence as described in \ref{sec:segmentation}. 
-Matrix $a_1$ represents the scores for when the segment is true, and $a_0$ for when the segment is false.
-Matrix $a_0$ consists of only zeros to simplify the model.
+The matrix $A_1$ represents the scores for when the segment is true, and $A_0$ for when the segment is false.
+The matrix $A_0$ consists of only zeros to simplify the model.
 
-To construct $a_1$, an embedding matrix $H$ with dimensions $m \times d$ is used.
+To construct $A_1$, an embedding matrix $H$ with dimensions $m \times d$ is used.
 Here $m$ is the amount of tokens in $x$ and $d$ the hidden dimension of the LSTM.
-In addition, a weight matrix with dimensions $d \times d$ is used.
+In addition, a weight matrix $W$ with dimensions $d \times d$ is used.
 This weight matrix is learned by the encoder. 
-Matrix $a_1$ is then calculate as following:
+Matrix $A_1$ is then calculated as following:
 \begin{equation}
-    a_{ij1} = h_i^T w h_j
+    A_{ij1} = h_i^T W h_j
 \end{equation}
 And more efficiently, with matrices:
 \begin{equation}
-    a_1 = H w H^T
+    A_1 = H W H^T
 \end{equation}
-Note that the scores learned for $a_1$ can also be negative. 
+Note that the scores learned for $A_1$ can also be negative. 
 Therefore, the model can prefer to leave out a segment when needed.
 
 \subsection{Model description}
@@ -39,7 +39,7 @@ Then, using dynamic programming algorithms, a segmentation is sampled and its pr
 As described in section \ref{sec:optimizations}, variance reduction is applied and thus also a second segmentation is sampled.
 These segmentations are then converted into masks.
 
-\paragraph{Dynamic programming.} To sample a segmentation, the forward filtering, backward sampling algorithm \cite{FFBS} was used.
+\paragraph{Dynamic programming.} To sample a segmentation, the forward filtering, backward sampling algorithm \shortcite{FFBS} was used.
 This algorithm first calculates the logsumexp of all possible segmentations and then samples from this distribution.
 Pseudocode for this algorithm can be found in algorithm \ref{alg:forward}.
 
@@ -52,20 +52,20 @@ The logsumexp is then used in combination with the score of the segmentation (wh
 \caption{Forward filtering, backward sampling algorithm}
 \label{alg:ffbs}
 \begin{algorithmic}
-\Require $a$
-\Ensure sample
+\Require score tensor $A$ with shape $(m+1) \times (m+1) \times 2$
+\Ensure sampled segmentation
 \State
-\State $n \gets a.shape[0]$
+\State $n \gets A.\text{shape[0]}$
 \State $q_0 \gets 0$
 \For{$i=1, \dots, n$}
-    \State $q_i \gets \log \sum_{0 \leq j < i} \exp q_j + a_{ji}$
+    \State $q_i \gets \log \sum_{0 \leq j < i} (\exp (q_j + a_{ji0}) + \exp (q_j + a_{ji1}))$
 \EndFor
 \State
 \State $y \gets []$
 \State $i \gets n - 1$
 \While{$i > 0$}
-    \State sample $j < i$ with probability $p_j \gets \exp (a_{ji} + q_j - q_i)$
-    \State $y \gets ji \frown y$
+    \State sample $j < i$ and $k$ with probability $p_j \gets \exp (a_{ji0} + q_j - q_i) + \exp(a_{ji1} + q_j - q_i)$
+    \State $y \gets (ji,k) \frown y$
     \State $i \gets j$
 \EndWhile
 \State
@@ -77,13 +77,13 @@ The logsumexp is then used in combination with the score of the segmentation (wh
 \caption{Forward algorithm}
 \label{alg:forward}
 \begin{algorithmic}
-\Require $a$
+\Require score tensor $A$ with shape $(m+1) \times (m+1) \times 2$
 \Ensure log-normalizer
 \State
-\State $n \gets a.shape[0]$
+\State $n \gets A.\text{shape[0]}$
 \State $q_0 \gets 0$
 \For{$i=1, \dots, n$}
-    \State $q_i \gets \log \sum_{0 \leq j < i} \exp q_j + a_{ji}$
+    \State $q_i \gets \log \sum_{0 \leq j < i} (\exp (q_j + a_{ji0}) + \exp (q_j + a_{ji1}))$
 \EndFor
 \State
 \State \Return $q_n$
