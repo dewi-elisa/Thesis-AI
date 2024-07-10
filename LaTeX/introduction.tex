@@ -15,7 +15,7 @@ Thus, the keywords come from multiple places in the sentence.
 Therefore, autocomplete systems need to use more complex models to be more efficient and accurate. 
 
 \section{Literature review}
-% TODO/delete
+% TODO:delete
 
 \subsection{Autocomplete communication game}
 
@@ -51,18 +51,22 @@ Therefore, a cost and a loss, respectively, can be defined:
 \subsection{Segmentation model}
 \label{sec:segmentation}
 % Why does a segmentation model work?
-% TODO: better captions for images
-% TODO: add references
-% TODO: add Markov Models
 
 \paragraph{General idea.}
-\textcolor{orange}{With a segmentation model all possible segmentation can be made. 
-A segmentation model scores every possible segmentation.
-With these scores, the model can determine what the best possible segmentation is.}
+If there is a rod of length $n$ and we can cut this rod at every marker, how can we best find the maximal total value of the resulting pieces?
+This is called the rod cutting problem.
+The segmentation model gives a solution to the rot cutting problem. 
+The segmentation model takes the scores of all pieces of the rod, called segments. 
+Those segments can be of length 1 or 2 or even $n$. 
+With these scores, the model determines what the best possible segmentation is. 
+To find the best segmentation and the probability of a segmentation, the model makes use of dynamic programming algorithms such as the Viterbi algorithm \cite{Viterbi} and the forward algorithm.
+The segmentation model is essentially a simpler version of a hidden semi-Markov model \cite{hsmms}. 
+
 
 \paragraph{Segmentation model for text.}
 So how does the segmentation model work for text? 
 If we have a sentence, e.g. \textit{'I will be late'}, we can use fencepost indexing and represent the fenceposts as nodes in a directed acyclic graph (DAG). 
+This can be compared with the rod from before.
 We can then draw edges between those nodes that represent segments. 
 Those segments can be seen as (groups of) words. 
 In figure \ref{fig:dag}, a DAG can be seen in which all the possible segments are showed. 
@@ -76,21 +80,21 @@ Both segmentations result in the keywords \textit{'will be late'}.
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figs/segmentation1.jpeg}
-        \caption{Segments as a DAG}
+        \caption{Possible segments in a DAG}
         \label{fig:dag}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figs/segmentation2.jpeg}
-        \caption{More segments as a DAG}
+        \caption{Possible segments in a DAG when each segment can either be true or false}
         \label{fig:dag2}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figs/segmentation3.jpeg}
-        \caption{Possible segmentation}
+        \caption{A possible segmentation}
         \label{fig:segmentation}
     \end{subfigure}
     \hfill
@@ -100,12 +104,10 @@ Both segmentations result in the keywords \textit{'will be late'}.
         \caption{Another possible segmentation}
         \label{fig:segmentation2}
     \end{subfigure}
-    \caption{Segmentation model.}
+    \caption{Segmentation model}
     \label{fig:segmentation_model}
 \end{figure}
 
-The best segmentations can be found with the help of dynamic programming algorithms such the Viterbi and the forward algorithms. 
-% TODO: add HMMs
 
 \subsection{Structured latent variables}
 A latent variable is an unobservable variable.
@@ -115,13 +117,16 @@ In the case of this model, we try to recover the full sentence by inferring what
 The mask determines what words are good keywords and thus is a latent variable. 
 In addition, the segmentation model makes this a structured variable. 
 
+% Previous research on segmentations predicted a segmentation as output, rather than as a latent variable \cite{hsmms,conditionalRandomFields,kong2016segmentalrecurrentneuralnetworks}. 
 
 \section{Current research}
 % Gap
 % Research question: To what extend can a segmentation model help by selecting keywords for an auto-complete communication game?
 % TODO: check references - are they relevant?
+% into account for what?
 
 Previous research did not take structure into account \cite{autocomplete, Bar-YossefZiv2011Cqa, SvyatkovskiyAlexey2019PACC}.
 Since language is structured, it makes sense to use a structured model as an autocomplete model. 
-In this research, we look at how we can use a latent segmentation model to retrieve keywords from a sentence. 
+Furthermore, previous work has shown that the prediction of segmentations can lead to better results than models that do not explicitly represent segments \cite{conditionalRandomFields,kong2016segmentalrecurrentneuralnetworks}. 
+Therefore, in this research, we look at how we can use a latent segmentation model to retrieve keywords from a sentence. 
 The segmentation model will be implemented in the encoder of the encoder-decoder model in order to choose the best keywords from the sentence.
