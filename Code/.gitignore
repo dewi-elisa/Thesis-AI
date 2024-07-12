@@ -5,6 +5,8 @@
 !*.py
 test.py
 !requirements.txt
+/figs
+/experiments
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
