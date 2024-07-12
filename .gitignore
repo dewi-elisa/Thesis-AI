@@ -1,5 +1,6 @@
 # ignore everything
-*
+/*
+LaTeX
 # but not the gitignore file
 !.gitignore
 # and a folder
