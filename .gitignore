@@ -5,6 +5,7 @@
 !.gitignore
 # and a folder
 !/Code
-# and two files
+# and some files
 !Midterm presentation.pdf
 !thesis.pdf
+!README.md
