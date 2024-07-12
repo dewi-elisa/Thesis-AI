@@ -86,17 +86,23 @@ def acc_vs_cost_plot(accuracy, cost, parameters):
 
     plt.figure()
     plt.plot(costs_train, accuracies_train, marker='o', linestyle='-', label='training')
-    plt.plot(costs_val, accuracies_val, marker='o', linestyle=':', label='validation')
-
     for i, parameter in enumerate(parameters):
         text = '$\lambda$ = ' + str(parameter)
         plt.text(costs_train[i], accuracies_train[i], text)
-        plt.text(costs_val[i], accuracies_val[i], text)
-
     plt.xlabel('Kept (%)')
     plt.ylabel('Greedy accuracy (%)')
     plt.legend()
-    plt.savefig('figs/acc_cost.png')
+    plt.savefig('figs/acc_cost_train.png')
+
+    # plt.figure()
+    plt.plot(costs_val, accuracies_val, marker='o', linestyle='-', label='validation')
+    for i, parameter in enumerate(parameters):
+        text = '$\lambda$ = ' + str(parameter)
+        plt.text(costs_val[i], accuracies_val[i], text)
+    plt.xlabel('Kept (%)')
+    plt.ylabel('Greedy accuracy (%)')
+    plt.legend()
+    plt.savefig('figs/acc_cost_val.png')
 
 
 def train_models(opt, parameters, device):

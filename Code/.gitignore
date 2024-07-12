@@ -1,8 +1,10 @@
-models/
-*.ipynb
+# ignore everything
+/*
+# except this
+!data/
+!*.py
 test.py
-figs/
-examples*
+!requirements.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

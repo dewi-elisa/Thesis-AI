@@ -2,9 +2,5 @@
 /*
 # but not the gitignore file
 !.gitignore
-# and some files
+# and a file
 !thesis.pdf
-!*.tex
-!articles.bib
-# and a folder
-!/figs

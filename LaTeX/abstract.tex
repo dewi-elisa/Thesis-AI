@@ -1,19 +1,22 @@
-To make tasks more efficient, an autocomplete system can predict a full sentences from a partial sentence.
-To do this, the system needs to be as accurate and efficient (as few tokens as possible) as possible. 
+To make writing tasks more efficient, an autocomplete system could predict a full sentences from a partial sentence.
+Previous research mainly focused on left-to-right autocompletion. 
+This is also the kind of autocompletion you can find on phones and computers nowadays.
+In this work however, a subsentence of the full sentence is used in order to autocomplete the full sentence.
+For an autocomplete system, it is important to be as accurate and efficient (as few tokens as possible) as possible. 
 In order to train such an autocomplete system, an encoder decoder model is made. 
-The encoder extracts keywords from a sentence, and the decoder tries to predict the full sentence from these keywords.
+The encoder extracts keywords from a sentence, resulting in a mask representing those keywords.
+The decoder then tries to predict the full sentence from the keywords.
 First, the model of \shortciteA{autocomplete} was replicated. 
 This work was one of the first to extract keywords from across the full sentence instead of the first or the last few words. 
 However, this was done in an unstructured manner. 
 Since human language is structured, this calls for a structured manner of extracting keywords. 
 Therefore, the second model in this paper is a structured model. 
 In order to achieve this, the encoder was adjusted to extract keywords using a segmentation model. 
-With the help of dynamic programming algorithms the keywords could be extracted resulting in \textcolor{orange}{\dots.}
-
-\textcolor{red}{TODO:\begin{enumerate}
-    \item add results
-    \item add conclusion
-    \item add discussion
-\end{enumerate}}
+With the help of dynamic programming algorithms and by looking at the mask as a latent variable the keywords were extracted.
+No significant differences were found between the two models. 
+However, due to limited computational resources the obtained results could be improved. 
+Future research can also expand the segmentation model more in order to improve results.
 
 \paragraph{Keywords:} segmentation, dynamic programming, autocompletion, autoencoder, communication, latent variables
+
+{\let\thefootnote\relax\footnote{{The code of this work can be found at GitHub, \url{https://github.com/dewi-elisa/Thesis-AI/}}}}

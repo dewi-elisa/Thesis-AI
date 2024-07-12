@@ -1,22 +1,94 @@
 % main finding
+No significant differences between the two models were found.
 
 % comparison with previous research
+\paragraph{Related work.}
+This work is closely related to \shortciteA{autocomplete}. 
+They share the same goal, namely to communicate as efficient and accurate as possible without losing interpretability. 
+In order to do so, they propose two models and compare these to baseline models. 
+Their linear model was replicated in chapter \ref{ch:repl}. 
+In this work the same data was used as in their work.
+However, due to computational resources our dataset was made considerably smaller and the prediction of capital letters and whitespaces was left out.
+Moreover, the model was trained for fewer epochs (10 instead of 30) and with an embedding dimension of 32 instead of 300.
+
+In their results they showed a figure similar to figure \ref{fig:acc_cost}.
+For convenience, this figure is showed in figure \ref{fig:lee}.
+In this work it was expected to find a similar trend. 
+However, this was not found. 
+This might be due to a smaller dataset and the smaller amount of training for our model.
+
+We also notice that the values of $\lambda$ are significantly smaller than the ones found in figure \ref{fig:lee}.
+This probably has to do with the lower embedding dimension and the smaller dataset.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{figs/lee.png}
+    \caption{Figure from \protect\shortciteA{autocomplete} comparing their two models on accuracy and cost. The Linear model is similar to our unstructured model.}
+    \label{fig:lee}
+\end{figure}
 
 % implications
-* Makkelijker informatie verzenden
-* Efficient
+\paragraph{Implications.}
+Communication between machines can take some time depending on how big the message is that the machines try to convey to each other.
+When efficient communication schemes can be found, the message can first be compressed before sending it to another machine. 
+In addition, with regard to humans, it can be more efficient for someone to write a text when only a few keywords are needed to write a full sentence. 
+However, more future research is needed to find such a model.
 
 % limitations
-More computational resources
-* more data
-* more epochs
-* more lambdas
+\paragraph{Limitations.}
+As mentioned before, due to computational resources the models were a bit simpler than in \shortciteA{autocomplete}.
+With more computational resources, more data could be used.
+More data can mean a higher accuracy. 
+Furthermore, the accuracy on the validation set is currently higher than on the training set. 
+This could be due to the dropout. 
+More data could solve this problem.
+It should be noted, however, that in case more data is used, the model would benefit from a higher embedding dimension.
+
+When looking at figure \ref{fig:obj}, we see that for the unstructured model the loss is still going down. 
+Therefore, the models could benefit from longer training. 
+Moreover, for the segmentation model the value of $\lambda$ does not seem to change a lot.
+With more computational resources and time, the models could be trained longer and with different values of $\lambda$.
 
 % unexpected results/patterns
-Hard to drop words
+\paragraph{Unexpected results.}
+There were a few unexpected results.
+First, during the training of the models it was observed that training on a GPU was not significantly faster than on a CPU. 
+This can be the case because a lot of for loops are used. 
+Because of the high amount of for loops the code cannot be parallelized well, which is what GPUs are good at.
+
+Second, it was hard for the models to drop words (see figure \ref{fig:cost}).
+Possible causes for this can be the value of $\lambda$, the limited computational resources or a combination of these two. 
+
+Third, the value of $\lambda$ does not seem to have a big difference on the segmentation model. 
+The matrix $W$, used to make the score tensor $\boldsymbol{A}$, is currently initialized with zeros. 
+It might be better to initialize the tensor with different values.
+
+Last, when using a learning rate of 0.01 the sigmoid in the encoder returned values of nan. 
+This can be caused by a learning rate that is too high. 
+Therefore, the learning rate had to be kept low, at least for the encoder. 
 
 % future research
-Future research can use the segmentation model on other languages or sounds.
-* Can be used in all languages (direction does not matter, characters do not matter)
+\paragraph{Future research.}
+Future research can tackle the problems caused due to limitations. 
+In addition, a few changes for the segmentation model itself come to mind.
+First, future research can use the segmentation model on other languages or sounds.
+For the segmentation model it does not matter if the input data is words or sounds, as long as scores can be assigned to the different words.
+Moreover, if the language has other characters or another reading direction than that from English, the segmentation model can also handle this.
 
-In addition, the model can be expanded by adding pos tags or using syllables instead of words.
+Second, the model can use syllables or other word parts instead of words.
+Certain syllables might have a different score than others. 
+For example, leaving out \textit{un} in \textit{unexpected} can lead to an entirely different meaning. 
+However, we need to keep in mind that this can cause our keywords to not have full words, but rather parts of words. 
+This leads to less interpretable keywords.
+Therefore, it is important to think about this trade-off.
+
+Third, the model can be expanded by adding labels, for example, POS tags. 
+Choosing to keep a keyword can be dependent on the POS tag of a word or if something is a person or organization can also have an influence.
+For example, a determiner usually does not give us much information. 
+A noun, however, does.
+Therefore, the segmentation model can be expanded by adding a transition matrix $T$ which scores the transition from one label to another. 
+This transition matrix can then be used in the dynamic programming algorithms to calculate probabilities and sample the mask.
+
+Last, the model uses an attention mechanism.
+However, nowadays, transformers popular. 
+The attention mechanism can be replaced by a transformer to see if this works better than the current attention mechanism.

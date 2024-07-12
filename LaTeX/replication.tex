@@ -1,3 +1,4 @@
+% TODO: check if lambda misses in control variate function
 In the first experiment the autoencoder model from \shortciteA{autocomplete} was replicated. 
 
 \section{Method}
@@ -5,11 +6,9 @@ To replicate the model, an encoder-decoder model was made. The encoder chooses w
 
 \subsection{Data}
 \label{sec:data}
-% TODO: make a table with a few example sentences
-% TODO: descirbe train, validation and test set
 The same data was used as in \shortciteA{autocomplete}.
-The data used to train the model consisted of 500K randomly sampled sentences from the Yelp restaurant reviews corpus \shortcite{data}.
-Another 50K sentences were used to evaluate the model. 
+The data used to train the model consisted of 1K randomly sampled sentences from the Yelp restaurant reviews corpus \shortcite{data}.
+Another 100 sentences were used to evaluate the model. 
 The sentences had at most 16 tokens. 
 The reviews were segmented into sentences following the same procedure as in \shortciteA{GuuKelvin2018GSbE}. 
 
@@ -19,16 +18,26 @@ Therefore, the data was adjusted to leave out the characters for whitespaces.
 Something similar is also true for capital letters: usually these only occur at the start of a sentence or in names. 
 It is thus not necessary to also predict capital letters. 
 
-\noindent\textcolor{red}{TODO: \begin{enumerate}
-    \item Table with example sentences
-    \item Adjust the number of sentences used for the training and the validation set (Due to computational resources \dots)
-\end{enumerate}}
-
 \subsection{Experimental Design}
 The model used is an encoder-decoder model.
+For a schematic overview, see figure \ref{fig:autocomplete}.
 The encoder, using the encoding strategy $q_{\alpha}(z|x)$, takes as input a target sequence $x = (x_1, \dots, x_m)$ and outputs a sequence of keywords $z = (z_1, \dots, z_n)$.
 The decoder, using the decoding strategy $p_{\beta}(x|z)$, then takes these keywords as input and outputs a predicted sequence $y = (y_1, \dots, y_k)$. 
 The better the autoencoder works, the more likely it is that $x$ and $y$ are equal. 
+Table \ref{tab:example} gives an example of a sentence, a possible mask and the keywords generated using that mask.
+
+\begin{table}
+    \centering
+    \begin{tabular}{|cl|}
+        \hline
+        sentence & <sos> the vibe is urban modern . <eos> \\
+        mask & $\quad$ 0 $\quad$ 0 $\quad$ 1 $\quad$ 0 $\quad$ 1 $\quad$ 1 $\quad$ 0 $\quad$ 0 \\
+        keywords & vibe urban modern  \\
+        \hline
+    \end{tabular}
+    \caption{Example sentence, mask and keywords}
+    \label{tab:example}
+\end{table}
 
 \subsection{Model description}
 \label{sec:model}
@@ -42,7 +51,7 @@ Finally, the sequence of kept tokens and the log probability of the mask are ret
 \paragraph{Decoder.} 
 The decoder itself is also an encoder-decoder model (the encoder of this model is referred to as encoder*).
 The encoder* first embeds the tokens of the subsequence.
-It then encodes the embedding using a bi-directional LSTM. 
+It then encodes the embedding using a bidirectional LSTM. 
 
 The decoder decodes the full sentence. 
 It therefore embeds the already decoded sequence (or just the <sos> symbol if there is none) into a 32-dimensional vector and concatenates the last hidden state of the encoder* to it. 
@@ -60,9 +69,9 @@ If equation \ref{eq:cost} and \ref{eq:loss} are merged and a parameter $\lambda$
     \label{eq:loss2}
     \min_{\alpha, \beta} \mathbb{E} [\text{cost}(x, \alpha)] + \lambda \cdot \mathbb{E}[\text{loss}(x, \alpha, \beta)].
 \end{equation}
-Here the expactation is taken over $x$. 
+Here the expectation is taken over $x$. 
 Since the gradients of equation \ref{eq:loss2} cannot be calculated, it is approximated with Monte Carlo.
-The gradients can then by calculated as following (see appendix \ref{app:gradients} for the exact derivations):
+The gradients can then be calculated as following (see appendix \ref{app:gradients} for the exact derivations):
 
 \begin{equation}
     \label{eq:gradient_alpha}
@@ -93,7 +102,7 @@ During training, the sentences start with a <sos> symbol and end with a <eos> sy
 During evaluation of the model, those symbols are removed.
 
 The model is implemented using PyTorch \shortcite{pytorch}.
-After each token is embedded, ReLu is used. During training, dropout is used to prevent overfitting. 
+After each token is embedded, a ReLu is used with a dropout rate of 10\% during training to prevent overfitting. 
 The hidden dimensions of the LSTM layers are all 32. 
 To optimize the model an Adam optimizer \shortcite{adam} is used with a learning rate of 0.01. 
 Multiple models were trained for 10 epochs with different values for $\lambda$.
@@ -114,16 +123,14 @@ $p_{\text{word}}(w)$ is the probability of the to be generated word if a word is
 \paragraph{Adjusted vocabulary.} The model makes a vocabulary to translate words to numbers. 
 During the evaluation of the model, a lot of unknown tokens were encountered.
 This was due to words that were not present in the training set but were in the validation set. 
-To solve this problem, the vocobulary was made using the whole dataset, instead of just the training set. 
+To solve this problem, the vocabulary was made using the whole dataset, instead of just the training set. 
 \shortciteA{autocomplete} used the copy mechanism and a dynamic vocabulary for this, but for the task at hand and the amount of data this also works.
 
-\paragraph{Variance reduction.} Because of the use of a SFE the gradient can be more prone to noise \shortcite{niculae2023discretelatentstructureneural}.
+\paragraph{Variance reduction.} Because of the use of an SFE the gradient can be more prone to noise \shortcite{niculae2023discretelatentstructureneural}.
 To solve this problem, its variance can be reduced in a couple of ways. 
 One of those solutions is to sample a second subsentence in the encoder \shortcite{RennieStevenJ2017SSTf}. 
-With this second subsentence, $f(z')$ can be determined and the loss can be updated as following:
+With this second subsentence, $f(x, z', \beta)$ can be determined, and the loss can be updated as following:
 \begin{equation}
     \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_w \log q_{\alpha}(z|x) \cdot (f(x, z, \beta)-f(x, z', \beta))] + \mathbb{E}_{q_{\alpha}(z|x)} [\nabla_w f(x, z, \beta)],
 \end{equation}
-where $w$ is a parameter (i.e. either $\alpha$ or $\beta$). Note that the gradient is not changed when subtracting $f(z')$ from $f(z)$ since it can be seen as constant because it is independent of $z$.
-
-\section{Results}
+where $w$ is a parameter (i.e. either $\alpha$ or $\beta$). Note that the gradient is not changed when subtracting $f(x, z', \beta)$ from $f(x, z, \beta)$ since it can be seen as constant because it is independent of $z$.

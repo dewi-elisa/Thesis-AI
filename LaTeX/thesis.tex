@@ -33,10 +33,10 @@
 
 % [CHANGE] The title of your thesis. If your thesis has a subtitle, then this
 % should appear right below the main title, in a smaller font.
-\newcommand{\theTitle}{The first sentence \\
+\newcommand{\theTitle}{Segmentation model for \\
 \vspace{0.5em}
-the second sentence}
-\newcommand{\theSubTitle}{a smaller subtitle}
+autocomplete communication}
+\newcommand{\theSubTitle}{with latent variables}
 
 
 % [CHANGE] Your full name. In case of multiple names, you can include their
@@ -142,7 +142,7 @@ Science Park 900\\
 \chapter{Introduction}
 \input{introduction.tex}
 
-\chapter{Experiment 1 \\ Replication}
+\chapter{Experiment 1 \\ Unstructured Model}
 \label{ch:repl}
 \input{replication.tex}
 
@@ -150,19 +150,18 @@ Science Park 900\\
 \input{segmentation.tex}
 
 \chapter{Results}
+\input{results.tex}
 
 \chapter{Conclusion}
 \input{conclusion.tex}
 
 \chapter{Discussion}
-% \input{discussion.tex}
+\input{discussion.tex}
 
 \bibliography{articles.bib}
 \bibliographystyle{apacite}
 
 \appendix
-\chapter{Optimization derivations}
-\label{app:gradients}
 \input{appendix.tex}
 
 \end{document}

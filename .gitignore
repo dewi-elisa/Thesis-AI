@@ -2,8 +2,8 @@
 /*
 # but not the gitignore file
 !.gitignore
-# and two folders
+# and a folder
 !/Code
-!/LaTeX
-# and a file
+# and two files
 !Midterm presentation.pdf
+!thesis.pdf

@@ -82,7 +82,7 @@ def evaluate(opt, device, encoder, decoder, word2id, id2word, loader):
 
     avg_efficiency = np.mean(efficiency_all)
     avg_loss = np.mean(loss_all)
-    accuracy_all = np.sum(accuracy) / len(loss_all) * 100
+    accuracy_all = np.mean(accuracy) * 100
     avg_recon_loss = np.mean(recon_loss_all)
 
     return results_all, avg_efficiency, avg_loss, accuracy_all, avg_recon_loss
