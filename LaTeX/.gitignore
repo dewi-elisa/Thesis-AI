@@ -1,6 +1,0 @@
-# ignore everything
-/*
-# but not the gitignore file
-!.gitignore
-# and a file
-!thesis.pdf
